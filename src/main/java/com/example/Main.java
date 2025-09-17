@@ -1,6 +1,16 @@
 package com.example;
 
 import java.util.*;
+class RecurringTask {
+    String name;
+    int slots;
+    List<Integer> days; // days to repeat on (0=Mon, 6=Sun)
+    RecurringTask(String name, int slots, List<Integer> days) {
+        this.name = name;
+        this.slots = slots;
+        this.days = days;
+    }
+}
 
 public class Main {
     public static void main(String[] args) {
@@ -34,7 +44,7 @@ public class Main {
         int sleepDurationSlots = sleepDurationHours * 2;
 
         // 3. Get tasks
-        List<Task> tasks = new ArrayList<>();
+        List<RecurringTask> recurringTasks = new ArrayList<>();
         System.out.println("Enter number of tasks: ");
         int numTasks = scanner.nextInt();
         scanner.nextLine(); // consume newline
@@ -45,8 +55,33 @@ public class Main {
             double dur = scanner.nextDouble();
             scanner.nextLine(); // consume newline
             int slots = (int) Math.round(dur * 2);
-            tasks.add(new Task(name, slots));
+            System.out.println("Should this task repeat on specific days? (yes/no): ");
+            String repeat = scanner.nextLine().trim().toLowerCase();
+            List<Integer> days = new ArrayList<>();
+            if (repeat.equals("yes")) {
+                System.out.println("Enter days as comma-separated numbers (0=Mon, 6=Sun), e.g., 0,2,4: ");
+                String daysInput = scanner.nextLine();
+                String[] dayTokens = daysInput.split(",");
+                for (String token : dayTokens) {
+                    try {
+                        days.add(Integer.parseInt(token.trim()));
+                    } catch (NumberFormatException e) {}
+                }
+            } else {
+                // If not recurring, schedule on any day
+                for (int d = 0; d < 7; d++) days.add(d);
+            }
+            recurringTasks.add(new RecurringTask(name, slots, days));
         }
+
+
+    // Flatten recurringTasks into a list of Task objects for each day
+    List<Task> tasks = new ArrayList<>();
+    for (RecurringTask rt : recurringTasks) {
+        for (int day : rt.days) {
+            tasks.add(new Task(rt.name, rt.slots, day));
+        }
+    }
 
     SchedulerService scheduler = new SchedulerService();
     ScheduleResult scheduleResult = scheduler.generateTimetable(

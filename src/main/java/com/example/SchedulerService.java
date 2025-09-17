@@ -52,59 +52,47 @@ public class SchedulerService {
         }
 
         // 3. Distribute tasks as evenly as possible, filling any available block
-        int[] dayLoads = new int[7];
         for (Task task : tasks) {
             boolean scheduled = false;
-            // Try to place on day with least load
             int bestDay = -1;
-            int minLoad = Integer.MAX_VALUE;
-            for (int day = 0; day < 7; day++) {
-                int load = dayLoads[day];
-                if (load < minLoad) {
-                    minLoad = load;
+            int bestStart = -1;
+            int maxBlock = -1;
+            // If task has a targetDay, only search that day
+            List<Integer> daysToSearch = new ArrayList<>();
+            if (task.getTargetDay() != null) {
+                daysToSearch.add(task.getTargetDay());
+            } else {
+                for (int d = 0; d < 7; d++) daysToSearch.add(d);
+            }
+            for (int day : daysToSearch) {
+                int currentBlock = 0;
+                int blockStart = -1;
+                for (int slot = 0; slot < 48; slot++) {
+                    if (timetable.getSlots()[day][slot] == null) {
+                        if (currentBlock == 0) blockStart = slot;
+                        currentBlock++;
+                    } else {
+                        if (currentBlock >= task.getDurationInSlots() && currentBlock > maxBlock) {
+                            bestDay = day;
+                            bestStart = blockStart;
+                            maxBlock = currentBlock;
+                        }
+                        currentBlock = 0;
+                        blockStart = -1;
+                    }
+                }
+                // Check at end of day
+                if (currentBlock >= task.getDurationInSlots() && currentBlock > maxBlock) {
                     bestDay = day;
+                    bestStart = blockStart;
+                    maxBlock = currentBlock;
                 }
             }
-            // Try to place on bestDay, searching all possible slots
-            for (int start = 0; start <= 48 - task.getDurationInSlots(); start++) {
-                boolean fits = true;
+            if (bestDay != -1 && bestStart != -1) {
                 for (int i = 0; i < task.getDurationInSlots(); i++) {
-                    if (timetable.getSlots()[bestDay][start + i] != null) {
-                        fits = false;
-                        break;
-                    }
+                    timetable.getSlots()[bestDay][bestStart + i] = task;
                 }
-                if (fits) {
-                    for (int i = 0; i < task.getDurationInSlots(); i++) {
-                        timetable.getSlots()[bestDay][start + i] = task;
-                    }
-                    dayLoads[bestDay] += task.getDurationInSlots();
-                    scheduled = true;
-                    break;
-                }
-            }
-            if (!scheduled) {
-                // Try to place anywhere, searching all possible slots
-                outer:
-                for (int day = 0; day < 7; day++) {
-                    for (int start = 0; start <= 48 - task.getDurationInSlots(); start++) {
-                        boolean fits = true;
-                        for (int i = 0; i < task.getDurationInSlots(); i++) {
-                            if (timetable.getSlots()[day][start + i] != null) {
-                                fits = false;
-                                break;
-                            }
-                        }
-                        if (fits) {
-                            for (int i = 0; i < task.getDurationInSlots(); i++) {
-                                timetable.getSlots()[day][start + i] = task;
-                            }
-                            dayLoads[day] += task.getDurationInSlots();
-                            scheduled = true;
-                            break outer;
-                        }
-                    }
-                }
+                scheduled = true;
             }
             if (!scheduled) {
                 unscheduledTasks.add(task);
