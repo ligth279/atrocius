@@ -7,11 +7,27 @@ public class ScheduleViewer {
         Activity[][] slots = timetable.getSlots();
         for (int day = 0; day < 7; day++) {
             System.out.println("Day " + (day + 1) + ":");
-            for (int slot = 0; slot < 48; slot++) {
-                String name = (slots[day][slot] != null) ? slots[day][slot].getName() : "Free time";
-                System.out.println("  Slot " + slot + ": " + name);
+            int start = 0;
+            while (start < 48) {
+                String name = (slots[day][start] != null) ? slots[day][start].getName() : "Free time";
+                int end = start;
+                while (end + 1 < 48) {
+                    String nextName = (slots[day][end + 1] != null) ? slots[day][end + 1].getName() : "Free time";
+                    if (!nextName.equals(name)) break;
+                    end++;
+                }
+                String startTime = slotToTime(start);
+                String endTime = slotToTime(end + 1); // end is inclusive, so add 1
+                System.out.println("  " + startTime + " - " + endTime + ": " + name);
+                start = end + 1;
             }
         }
+    }
+
+    private String slotToTime(int slot) {
+        int hour = (slot / 2) % 24;
+        int minute = (slot % 2) * 30;
+        return String.format("%02d:%02d", hour, minute);
     }
 
     public void printUnscheduledTasks(List<Task> tasks) {
