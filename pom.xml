@@ -29,7 +29,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>com.example.Main</mainClass>
+                    <mainClass>com.example.SchedulerGUI</mainClass>
                 </configuration>
             </plugin>
         </plugins>

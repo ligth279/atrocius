@@ -3,6 +3,28 @@ package com.example;
 import java.util.List;
 
 public class ScheduleViewer {
+        public String getScheduleString(Timetable timetable) {
+            StringBuilder sb = new StringBuilder();
+            Activity[][] slots = timetable.getSlots();
+            for (int day = 0; day < 7; day++) {
+                sb.append("Day ").append(day + 1).append(":\n");
+                int start = 0;
+                while (start < 48) {
+                    String name = (slots[day][start] != null) ? slots[day][start].getName() : "Free time";
+                    int end = start;
+                    while (end + 1 < 48) {
+                        String nextName = (slots[day][end + 1] != null) ? slots[day][end + 1].getName() : "Free time";
+                        if (!nextName.equals(name)) break;
+                        end++;
+                    }
+                    String startTime = slotToTime(start);
+                    String endTime = slotToTime(end + 1); // end is inclusive, so add 1
+                    sb.append("  ").append(startTime).append(" - ").append(endTime).append(": ").append(name).append("\n");
+                    start = end + 1;
+                }
+            }
+            return sb.toString();
+        }
     public void printWeeklySchedule(Timetable timetable) {
         Activity[][] slots = timetable.getSlots();
         for (int day = 0; day < 7; day++) {
