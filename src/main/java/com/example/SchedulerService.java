@@ -6,9 +6,17 @@ public class SchedulerService {
     public ScheduleResult generateTimetable(
             List<Integer> workdays, int workStartSlot, int workDurationSlots,
             int sleepDurationSlots,
-            List<Task> tasks) {
+            List<Task> tasks,
+            List<Event> events) {
         Timetable timetable = new Timetable();
         List<Task> unscheduledTasks = new ArrayList<>();
+
+        // 0. Place events first, with forced placement
+        for (Event event : events) {
+            int day = event.getTargetDay();
+            int startSlot = event.getStartSlot();
+            timetable.placeAt(event, day, startSlot, true); // force overwrite
+        }
 
         // 1. Place work at user-specified time on all workdays
         for (int workDay : workdays) {
@@ -16,37 +24,27 @@ public class SchedulerService {
             timetable.placeAt(work, workDay, workStartSlot);
         }
 
-        // 2. Place sleep: for each day, half at end of previous day, half at start of current day
+        // 2. Place sleep: fill available night slots (20:00-08:00) with 'Sleep' until quota is met, even if split
         for (int day = 0; day < 7; day++) {
-            int half = sleepDurationSlots / 2;
-            int otherHalf = sleepDurationSlots - half;
-            int prevDay = (day + 6) % 7; // previous day, wrap around
-            // Place second half at start of current day if not already filled
-            if (otherHalf > 0) {
-                boolean canPlace = true;
-                for (int i = 0; i < otherHalf; i++) {
-                    if (timetable.getSlots()[day][i] != null) {
-                        canPlace = false;
-                        break;
-                    }
-                }
-                if (canPlace) {
-                    FixedActivity sleepStart = new FixedActivity("Sleep", otherHalf);
-                    timetable.placeAt(sleepStart, day, 0);
+            int sleepPlaced = 0;
+            Activity[] slots = timetable.getSlots()[day];
+            // Night period: 20:00 (slot 40) to 48, then 0 to 16 (08:00)
+            int[] nightSlots = new int[24];
+            int idx = 0;
+            for (int s = 40; s < 48; s++) nightSlots[idx++] = s;
+            for (int s = 0; s < 16; s++) nightSlots[idx++] = s;
+            // Count already filled sleep slots in night
+            for (int s : nightSlots) {
+                if (slots[s] != null && "Sleep".equals(slots[s].getName())) {
+                    sleepPlaced++;
                 }
             }
-            // Place first half at end of previous day if not already filled
-            if (half > 0) {
-                boolean canPlace = true;
-                for (int i = 0; i < half; i++) {
-                    if (timetable.getSlots()[prevDay][48 - half + i] != null) {
-                        canPlace = false;
-                        break;
-                    }
-                }
-                if (canPlace) {
-                    FixedActivity sleepEnd = new FixedActivity("Sleep", half);
-                    timetable.placeAt(sleepEnd, prevDay, 48 - half);
+            // Fill remaining sleep slots in available night slots
+            for (int s : nightSlots) {
+                if (sleepPlaced >= sleepDurationSlots) break;
+                if (slots[s] == null) {
+                    slots[s] = new FixedActivity("Sleep", 1);
+                    sleepPlaced++;
                 }
             }
         }

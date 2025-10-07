@@ -69,7 +69,8 @@ public class ActivityRepository {
                         activity = new FixedActivity(name, duration);
                         break;
                     case "Event":
-                        activity = new Event(name, duration);
+                        // DB does not store startDay/startSlot, use 0,0 as dummy values
+                        activity = new Event(name, duration, 0, 0);
                         break;
                     case "Task":
                         activity = new Task(name, duration);

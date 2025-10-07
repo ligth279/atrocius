@@ -34,12 +34,17 @@ public class Timetable {
     }
 
     public void placeAt(Activity activity, int day, int startSlot) {
+        placeAt(activity, day, startSlot, false);
+    }
+
+    // Overloaded: force=true allows overwriting existing activities (for events)
+    public void placeAt(Activity activity, int day, int startSlot, boolean force) {
         int duration = activity.getDurationInSlots();
         for (int i = 0; i < duration; i++) {
             if (day < 0 || day >= DAYS || startSlot + i < 0 || startSlot + i >= SLOTS_PER_DAY) {
                 throw new IllegalArgumentException("Invalid day or slot for activity placement");
             }
-            if (slots[day][startSlot + i] != null) {
+            if (!force && slots[day][startSlot + i] != null) {
                 throw new IllegalStateException("Slot already occupied at day " + day + ", slot " + (startSlot + i));
             }
             slots[day][startSlot + i] = activity;

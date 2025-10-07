@@ -86,7 +86,7 @@ public class Main {
     SchedulerService scheduler = new SchedulerService();
     ScheduleResult scheduleResult = scheduler.generateTimetable(
         workdays, workStartSlot, workDurationSlots,
-        sleepDurationSlots, tasks);
+        sleepDurationSlots, tasks, new ArrayList<Event>());
 
         ScheduleViewer viewer = new ScheduleViewer();
         viewer.printWeeklySchedule(scheduleResult.timetable());
