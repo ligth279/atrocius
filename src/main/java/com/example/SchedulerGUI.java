@@ -51,6 +51,7 @@ public class SchedulerGUI extends JFrame {
         inputPanel.add(endDateSpinner, gbc);
     gbc.gridy++;
     inputPanel.add(new JLabel("Workdays (1=Mon,7=Sun):"), gbc);
+    gbc.gridy++;
     gbc.gridx = 1;
     workdaysField = new JTextField("0,1,2,3,4", 8);
     workdaysField.setPreferredSize(new Dimension(80, 22));

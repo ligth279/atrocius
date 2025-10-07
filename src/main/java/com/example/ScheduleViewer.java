@@ -14,16 +14,16 @@ public class ScheduleViewer {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yy");
         LocalDate today = LocalDate.now();
         int days = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
-        for (int day = 0; day < days && day < 7; day++) {
+        for (int day = 0; day < days; day++) {
             LocalDate date = startDate.plusDays(day);
             if (date.isAfter(today)) {
                 sb.append(date.format(fmt)).append(" (").append(getDayName(day)).append("):").append("\n");
                 int start = 0;
                 while (start < 48) {
-                    String name = (slots[day][start] != null) ? slots[day][start].getName() : "Free time";
+                    String name = (slots[day % 7][start] != null) ? slots[day % 7][start].getName() : "Free time";
                     int end = start;
                     while (end + 1 < 48) {
-                        String nextName = (slots[day][end + 1] != null) ? slots[day][end + 1].getName() : "Free time";
+                        String nextName = (slots[day % 7][end + 1] != null) ? slots[day % 7][end + 1].getName() : "Free time";
                         if (!nextName.equals(name)) break;
                         end++;
                     }
