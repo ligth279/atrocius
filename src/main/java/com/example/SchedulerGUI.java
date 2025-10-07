@@ -17,6 +17,7 @@ public class SchedulerGUI extends JFrame {
     private JSpinner sleepDurationSpinner;
     private JTextArea tasksArea;
     private JTextArea eventsArea;
+    private JSpinner endDateSpinner;
 
 
     public SchedulerGUI() {
@@ -26,18 +27,28 @@ public class SchedulerGUI extends JFrame {
         setLocationRelativeTo(null);
 
         // Input panel
-    JPanel inputPanel = new JPanel();
-    inputPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(2, 2, 2, 2);
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-    JLabel workdayHeading = new JLabel("Workdays");
-    workdayHeading.setFont(workdayHeading.getFont().deriveFont(Font.BOLD));
-    inputPanel.add(workdayHeading, gbc);
-    gbc.gridy++;
-    inputPanel.add(new JSeparator(), gbc);
-    gbc.gridwidth = 1;
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 2, 2, 2);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        JLabel workdayHeading = new JLabel("Workdays");
+        workdayHeading.setFont(workdayHeading.getFont().deriveFont(Font.BOLD));
+        inputPanel.add(workdayHeading, gbc);
+        gbc.gridy++;
+        inputPanel.add(new JSeparator(), gbc);
+        gbc.gridwidth = 1;
+
+        // End date picker
+        gbc.gridx = 0; gbc.gridy++;
+        inputPanel.add(new JLabel("Show timetable until (inclusive):"), gbc);
+        gbc.gridx = 1;
+        endDateSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(endDateSpinner, "yyyy-MM-dd");
+        endDateSpinner.setEditor(dateEditor);
+        endDateSpinner.setValue(java.sql.Date.valueOf(java.time.LocalDate.now().plusDays(7)));
+        inputPanel.add(endDateSpinner, gbc);
     gbc.gridy++;
     inputPanel.add(new JLabel("Workdays (1=Mon,7=Sun):"), gbc);
     gbc.gridx = 1;
@@ -207,12 +218,17 @@ public class SchedulerGUI extends JFrame {
             SchedulerService scheduler = new SchedulerService();
             ScheduleResult result = scheduler.generateTimetable(workdays, workStartSlot, workDurationSlots, sleepDurationSlots, tasks, events);
             ScheduleViewer viewer = new ScheduleViewer();
-            // Find next Monday from today
+            // Find this Monday from today
             java.time.LocalDate today = java.time.LocalDate.now();
             java.time.DayOfWeek dow = today.getDayOfWeek();
             int daysSinceMonday = (dow.getValue() - java.time.DayOfWeek.MONDAY.getValue() + 7) % 7;
             java.time.LocalDate thisMonday = today.minusDays(daysSinceMonday);
-            outputArea.setText(viewer.getScheduleString(result.timetable(), thisMonday));
+
+            // Get user-specified end date
+            java.util.Date endDateVal = (java.util.Date) endDateSpinner.getValue();
+            java.time.LocalDate endDate = new java.sql.Date(endDateVal.getTime()).toLocalDate();
+
+            outputArea.setText(viewer.getScheduleString(result.timetable(), thisMonday, endDate));
         } catch (Exception ex) {
             outputArea.setText("Error: " + ex.getMessage());
         }

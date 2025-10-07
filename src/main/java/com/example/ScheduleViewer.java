@@ -1,10 +1,41 @@
 package com.example;
-
 import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class ScheduleViewer {
+
+    /**
+     * Show timetable from startDate up to and including endDate, only for days after today.
+     */
+    public String getScheduleString(Timetable timetable, LocalDate startDate, LocalDate endDate) {
+        StringBuilder sb = new StringBuilder();
+        Activity[][] slots = timetable.getSlots();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yy");
+        LocalDate today = LocalDate.now();
+        int days = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        for (int day = 0; day < days && day < 7; day++) {
+            LocalDate date = startDate.plusDays(day);
+            if (date.isAfter(today)) {
+                sb.append(date.format(fmt)).append(" (").append(getDayName(day)).append("):").append("\n");
+                int start = 0;
+                while (start < 48) {
+                    String name = (slots[day][start] != null) ? slots[day][start].getName() : "Free time";
+                    int end = start;
+                    while (end + 1 < 48) {
+                        String nextName = (slots[day][end + 1] != null) ? slots[day][end + 1].getName() : "Free time";
+                        if (!nextName.equals(name)) break;
+                        end++;
+                    }
+                    String startTime = slotToTime(start);
+                    String endTime = slotToTime(end + 1); // end is inclusive, so add 1
+                    sb.append("  ").append(startTime).append(" - ").append(endTime).append(": ").append(name).append("\n");
+                    start = end + 1;
+                }
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * Returns a schedule string with actual dates for each day, starting from the given startDate (Monday).
@@ -77,8 +108,6 @@ public class ScheduleViewer {
         }
         return sb.toString();
     }
-
-
 
     // Helper to get day name (Mon, Tue, ...)
     private String getDayName(int dayIdx) {
