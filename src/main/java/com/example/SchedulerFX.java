@@ -50,7 +50,15 @@ public class SchedulerFX extends Application {
         }
     }
     // UI fields for generator panel
-    private TextField workdaysField;
+    // private TextField workdaysField; // replaced by checkboxes
+    // Workday checkboxes (Mon–Sun) for work section
+    private CheckBox monWorkBox;
+    private CheckBox tueWorkBox;
+    private CheckBox wedWorkBox;
+    private CheckBox thuWorkBox;
+    private CheckBox friWorkBox;
+    private CheckBox satWorkBox;
+    private CheckBox sunWorkBox;
     private Spinner<Integer> workHourSpinner;
     private ComboBox<String> workMinuteBox;
     private Spinner<Integer> workDurationSpinner;
@@ -183,37 +191,58 @@ public class SchedulerFX extends Application {
         // Right content panel (category details)
         StackPane contentPane = new StackPane();
 
-        // Sleep content
-        VBox sleepContent = new VBox(18);
-        sleepContent.setAlignment(Pos.TOP_LEFT);
-        sleepContent.setPadding(new Insets(40, 40, 40, 40));
-        Label sleepHeader = new Label("😴 Sleep Settings");
-        sleepHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        Label sleepLabel = new Label("Sleep Duration (hours):");
-        sleepDurationSpinner = new Spinner<>(1, 24, 8);
-        sleepDurationSpinner.setEditable(true);
-        sleepContent.getChildren().addAll(sleepHeader, sleepLabel, sleepDurationSpinner);
+    // Sleep content (modernized UI)
+    VBox sleepContent = new VBox(18);
+    sleepContent.setAlignment(Pos.TOP_LEFT);
+    sleepContent.setPadding(new Insets(40, 40, 40, 40));
+    sleepContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    HBox sleepHeaderBox = new HBox(10, new Label("😴"), new Label("Sleep Settings"));
+    ((Label)sleepHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+    Label sleepLabel = new Label("Sleep Duration (hours):");
+    sleepDurationSpinner = new Spinner<>(1, 24, 8);
+    sleepDurationSpinner.setEditable(true);
+    Label sleepTip = new Label("Recommended: 7–9 hours per night");
+    sleepTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
+    sleepContent.getChildren().addAll(sleepHeaderBox, sleepLabel, sleepDurationSpinner, sleepTip);
 
-        // Work/School content
-        VBox workContent = new VBox(18);
-        workContent.setAlignment(Pos.TOP_LEFT);
-        workContent.setPadding(new Insets(40, 40, 40, 40));
-        Label workHeader = new Label("🏫 Work/School Settings");
-        workHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        Label workdaysLabel = new Label("Workdays (comma-separated, e.g. 1,2,3,4,5):");
-        workdaysField = new TextField("1,2,3,4,5");
-        workdaysField.setPrefWidth(180);
-        Label workStartLabel = new Label("Work Start Time:");
-        workHourSpinner = new Spinner<>(0, 23, 9);
-        workHourSpinner.setEditable(true);
-        workMinuteBox = new ComboBox<>();
-        workMinuteBox.getItems().addAll("00", "30");
-        workMinuteBox.setValue("00");
-        HBox workStartBox = new HBox(8, workHourSpinner, new Label(":"), workMinuteBox);
-        Label workDurationLabel = new Label("Work Duration (hours):");
-        workDurationSpinner = new Spinner<>(1, 12, 8);
-        workDurationSpinner.setEditable(true);
-        workContent.getChildren().addAll(workHeader, workdaysLabel, workdaysField, workStartLabel, workStartBox, workDurationLabel, workDurationSpinner);
+    // Work/School content (modernized UI)
+    VBox workContent = new VBox(18);
+    workContent.setAlignment(Pos.TOP_LEFT);
+    workContent.setPadding(new Insets(40, 40, 40, 40));
+    workContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    HBox workHeaderBox = new HBox(10, new Label("🏫"), new Label("Work/School Settings"));
+    ((Label)workHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+    Label workdaysLabel = new Label("Select Workdays:");
+    // Workday checkboxes (Mon–Sun)
+    // Initialize workday checkboxes (Mon–Sun) as class fields
+    monWorkBox = new CheckBox("Mon");
+    tueWorkBox = new CheckBox("Tue");
+    wedWorkBox = new CheckBox("Wed");
+    thuWorkBox = new CheckBox("Thu");
+    friWorkBox = new CheckBox("Fri");
+    satWorkBox = new CheckBox("Sat");
+    sunWorkBox = new CheckBox("Sun");
+    // Default Mon–Fri selected
+    monWorkBox.setSelected(true);
+    tueWorkBox.setSelected(true);
+    wedWorkBox.setSelected(true);
+    thuWorkBox.setSelected(true);
+    friWorkBox.setSelected(true);
+    HBox workdayCheckBoxes = new HBox(10, monWorkBox, tueWorkBox, wedWorkBox, thuWorkBox, friWorkBox, satWorkBox, sunWorkBox);
+    workdayCheckBoxes.setAlignment(Pos.CENTER_LEFT);
+    Label workdaysTip = new Label("Workdays repeat each week. Leave unchecked for days off.");
+    workdaysTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
+    Label workStartLabel = new Label("Work Start Time:");
+    workHourSpinner = new Spinner<>(0, 23, 9);
+    workHourSpinner.setEditable(true);
+    workMinuteBox = new ComboBox<>();
+    workMinuteBox.getItems().addAll("00", "30");
+    workMinuteBox.setValue("00");
+    HBox workStartBox = new HBox(8, workHourSpinner, new Label(":"), workMinuteBox);
+    Label workDurationLabel = new Label("Work Duration (hours):");
+    workDurationSpinner = new Spinner<>(1, 12, 8);
+    workDurationSpinner.setEditable(true);
+    workContent.getChildren().addAll(workHeaderBox, workdaysLabel, workdayCheckBoxes, workdaysTip, workStartLabel, workStartBox, workDurationLabel, workDurationSpinner);
 
         // Tasks content
         VBox tasksContent = new VBox(18);
@@ -676,7 +705,16 @@ public class SchedulerFX extends Application {
 
         // Collect user input
         int sleepHours = sleepDurationSpinner.getValue();
-        String workdaysText = workdaysField.getText();
+    // Build workdaysText from checkboxes (Mon=1, ..., Sun=7)
+    StringBuilder workdaysTextBuilder = new StringBuilder();
+    if (monWorkBox.isSelected()) workdaysTextBuilder.append("1,");
+    if (tueWorkBox.isSelected()) workdaysTextBuilder.append("2,");
+    if (wedWorkBox.isSelected()) workdaysTextBuilder.append("3,");
+    if (thuWorkBox.isSelected()) workdaysTextBuilder.append("4,");
+    if (friWorkBox.isSelected()) workdaysTextBuilder.append("5,");
+    if (satWorkBox.isSelected()) workdaysTextBuilder.append("6,");
+    if (sunWorkBox.isSelected()) workdaysTextBuilder.append("7,");
+    String workdaysText = workdaysTextBuilder.length() > 0 ? workdaysTextBuilder.substring(0, workdaysTextBuilder.length()-1) : "";
         int workHour = workHourSpinner.getValue();
         String workMinute = workMinuteBox.getValue();
         int workStartSlot = workHour * 2 + ("30".equals(workMinute) ? 1 : 0);
@@ -704,8 +742,8 @@ public class SchedulerFX extends Application {
 
         // Save timetable to backend for chosen date range
         java.util.List<Activity> allActs = new java.util.ArrayList<>();
-        allActs.add(new FixedActivity("Sleep", sleepHours * 2));
-        allActs.add(new FixedActivity("Work/School", workDuration * 2));
+    allActs.add(new FixedActivity("Sleep", sleepHours * 2));
+    allActs.add(new FixedActivity("Work", workDuration * 2));
         allActs.addAll(tasks);
         allActs.addAll(events);
         for (Activity act : allActs) repo.addActivity(act);
