@@ -1,17 +1,19 @@
 package com.example;
 
-public class Event extends Activity {
-    private int startDay;
-    private int startSlot;
+import java.time.LocalDate;
 
-    public Event(String name, int durationInSlots, int startDay, int startSlot) {
+public class Event extends Activity {
+    private final LocalDate eventDate;
+    private final int startSlot;
+
+    public Event(String name, int durationInSlots, LocalDate eventDate, int startSlot) {
         super(name, durationInSlots);
-        this.startDay = startDay;
+        this.eventDate = eventDate;
         this.startSlot = startSlot;
     }
 
-    public int getTargetDay() {
-        return startDay;
+    public LocalDate getEventDate() {
+        return eventDate;
     }
 
     public int getStartSlot() {

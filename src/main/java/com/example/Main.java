@@ -84,20 +84,24 @@ public class Main {
     }
 
     SchedulerService scheduler = new SchedulerService();
-    ScheduleResult scheduleResult = scheduler.generateTimetable(
-        workdays, workStartSlot, workDurationSlots,
-        sleepDurationSlots, tasks, new ArrayList<Event>());
-
-    ScheduleViewer viewer = new ScheduleViewer();
     // Find next Monday from today
     java.time.LocalDate today = java.time.LocalDate.now();
     java.time.DayOfWeek dow = today.getDayOfWeek();
     int daysUntilMonday = (java.time.DayOfWeek.MONDAY.getValue() - dow.getValue() + 7) % 7;
     if (daysUntilMonday == 0) daysUntilMonday = 7; // always next Monday
     java.time.LocalDate nextMonday = today.plusDays(daysUntilMonday);
-    viewer.printWeeklySchedule(scheduleResult.timetable(), nextMonday);
-    if (!scheduleResult.unscheduledTasks().isEmpty()) {
-        viewer.printUnscheduledTasks(scheduleResult.unscheduledTasks());
+    java.time.LocalDate endDate = nextMonday.plusDays(6); // 7-day week
+
+    ScheduleResult scheduleResult = scheduler.generateTimetable(
+        workdays, workStartSlot, workDurationSlots,
+        sleepDurationSlots, tasks, new ArrayList<Event>(),
+        nextMonday, endDate
+    );
+
+    ScheduleViewer viewer = new ScheduleViewer();
+    viewer.printWeeklySchedule(scheduleResult.getTimetable(), nextMonday);
+    if (!scheduleResult.getUnscheduledTasks().isEmpty()) {
+        viewer.printUnscheduledTasks(scheduleResult.getUnscheduledTasks());
     }
     }
 }

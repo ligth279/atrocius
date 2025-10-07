@@ -1,9 +1,14 @@
 package com.example;
 
 public class Timetable {
-    private static final int DAYS = 7;
+    private final int days;
     private static final int SLOTS_PER_DAY = 48; // 24 hours * 2
-    private Activity[][] slots = new Activity[DAYS][SLOTS_PER_DAY];
+    private Activity[][] slots;
+
+    public Timetable(int days) {
+        this.days = days;
+        this.slots = new Activity[days][SLOTS_PER_DAY];
+    }
 
     public boolean placeActivity(Activity activity) {
         // Dummy implementation: always returns true
@@ -13,7 +18,7 @@ public class Timetable {
 
     public boolean placeTaskIfPossible(Task task) {
         int needed = task.getDurationInSlots();
-        for (int day = 0; day < DAYS; day++) {
+        for (int day = 0; day < days; day++) {
             for (int start = 0; start <= SLOTS_PER_DAY - needed; start++) {
                 boolean fits = true;
                 for (int i = 0; i < needed; i++) {
@@ -43,9 +48,9 @@ public class Timetable {
         int d = day;
         int s = startSlot;
         for (int i = 0; i < duration; i++) {
-            if (d < 0 || d >= DAYS || s < 0 || s >= SLOTS_PER_DAY) {
+            if (d < 0 || d >= days || s < 0 || s >= SLOTS_PER_DAY) {
                 // Wrap to next day if slot overflows
-                d = (d + 1) % DAYS;
+                d = (d + 1) % days;
                 s = 0;
             }
             if (!force && slots[d][s] != null) {

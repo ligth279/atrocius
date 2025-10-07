@@ -1,3 +1,4 @@
+
 package com.example;
 
 import javax.swing.*;
@@ -5,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
 
 
 public class SchedulerGUI extends JFrame {
@@ -18,6 +20,10 @@ public class SchedulerGUI extends JFrame {
     private JTextArea tasksArea;
     private JTextArea eventsArea;
     private JSpinner endDateSpinner;
+    // For timetable management
+    private JComboBox<String> timetableDateBox;
+    private JButton loadTimetableButton;
+    private JButton deleteTimetableButton;
 
 
     public SchedulerGUI() {
@@ -137,26 +143,103 @@ public class SchedulerGUI extends JFrame {
         outputArea.setText("Welcome! Enter your schedule and click 'Generate Schedule'.");
         JScrollPane scrollPane = new JScrollPane(outputArea);
 
+        // Timetable management panel
+        JPanel timetablePanel = new JPanel();
+        timetablePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        timetablePanel.add(new JLabel("Old timetables (by date):"));
+        timetableDateBox = new JComboBox<>();
+        refreshTimetableDates();
+        timetablePanel.add(timetableDateBox);
+        loadTimetableButton = new JButton("Load");
+        deleteTimetableButton = new JButton("Delete");
+        timetablePanel.add(loadTimetableButton);
+        timetablePanel.add(deleteTimetableButton);
+
+        loadTimetableButton.addActionListener(e -> loadSelectedTimetable());
+        deleteTimetableButton.addActionListener(e -> deleteSelectedTimetable());
+
         // Button
         generateButton = new JButton("Generate Schedule");
         generateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 generateSchedule();
+                refreshTimetableDates();
             }
         });
 
         JPanel topPanel = new JPanel(new BorderLayout());
-    JScrollPane inputScrollPane = new JScrollPane(inputPanel);
-    inputScrollPane.setPreferredSize(new Dimension(600, 350));
-    topPanel.add(inputScrollPane, BorderLayout.CENTER);
-    topPanel.add(generateButton, BorderLayout.SOUTH);
+        JScrollPane inputScrollPane = new JScrollPane(inputPanel);
+        inputScrollPane.setPreferredSize(new Dimension(600, 350));
+        topPanel.add(inputScrollPane, BorderLayout.CENTER);
+        topPanel.add(generateButton, BorderLayout.SOUTH);
 
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(topPanel, BorderLayout.NORTH);
-    mainPanel.add(scrollPane, BorderLayout.CENTER);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.add(topPanel, BorderLayout.NORTH);
+        northPanel.add(timetablePanel, BorderLayout.SOUTH);
+        mainPanel.add(northPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-    add(mainPanel);
+        add(mainPanel);
+    }
+    // Refresh the timetable date dropdown
+    private void refreshTimetableDates() {
+        ActivityRepository repo = new ActivityRepository();
+        List<String> dates = repo.getAllTimetableDates();
+        timetableDateBox.removeAllItems();
+        for (String d : dates) timetableDateBox.addItem(d);
+    }
+
+    // Load and display timetable for selected date
+    private void loadSelectedTimetable() {
+        String date = (String) timetableDateBox.getSelectedItem();
+        if (date == null) {
+            outputArea.setText("No timetable date selected.");
+            return;
+        }
+        ActivityRepository repo = new ActivityRepository();
+        List<ActivityRepository.TimetableEntry> entries = repo.getTimetableForDate(date);
+        if (entries.isEmpty()) {
+            outputArea.setText("No timetable found for " + date);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Timetable for ").append(date).append(":\n");
+        // Group consecutive slots with the same activity
+        int n = entries.size();
+        int i = 0;
+        while (i < n) {
+            String activity = entries.get(i).activityName;
+            int startSlot = entries.get(i).slot;
+            int j = i + 1;
+            while (j < n && entries.get(j).activityName.equals(activity) && entries.get(j).slot == entries.get(j-1).slot + 1) {
+                j++;
+            }
+            int endSlot = entries.get(j-1).slot;
+            int startHour = startSlot / 2;
+            int startMin = (startSlot % 2) * 30;
+            int endHour = (endSlot + 1) / 2;
+            int endMin = ((endSlot + 1) % 2) * 30;
+            sb.append(String.format("%02d:%02d-%02d:%02d %s\n", startHour, startMin, endHour, endMin, activity));
+            i = j;
+        }
+        outputArea.setText(sb.toString());
+    }
+
+    // Delete timetable for selected date
+    private void deleteSelectedTimetable() {
+        String date = (String) timetableDateBox.getSelectedItem();
+        if (date == null) {
+            outputArea.setText("No timetable date selected.");
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this, "Delete all timetable entries for " + date + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+        ActivityRepository repo = new ActivityRepository();
+        repo.deleteTimetableForDateRange(date, date);
+        refreshTimetableDates();
+        outputArea.setText("Timetable for " + date + " deleted.");
     }
 
     private void generateSchedule() {
@@ -206,30 +289,43 @@ public class SchedulerGUI extends JFrame {
                 String[] parts = line.split(",");
                 if (parts.length >= 5) {
                     String name = parts[0].trim();
-                    int day = Integer.parseInt(parts[1].trim()) - 1; // 1=Mon,7=Sun
+                    java.time.LocalDate eventDate = java.time.LocalDate.parse(parts[1].trim()); // yyyy-MM-dd
                     int hour = Integer.parseInt(parts[2].trim());
                     int minute = Integer.parseInt(parts[3].trim());
                     int startSlot = hour * 2 + (minute == 30 ? 1 : 0);
                     double dur = Double.parseDouble(parts[4].trim());
                     int slots = (int) Math.round(dur * 2);
-                    events.add(new Event(name, slots, day, startSlot));
+                    events.add(new Event(name, slots, eventDate, startSlot));
                 }
             }
 
-            SchedulerService scheduler = new SchedulerService();
-            ScheduleResult result = scheduler.generateTimetable(workdays, workStartSlot, workDurationSlots, sleepDurationSlots, tasks, events);
-            ScheduleViewer viewer = new ScheduleViewer();
-            // Find this Monday from today
+            // Get user-specified start and end date
+            java.util.Date endDateVal = (java.util.Date) endDateSpinner.getValue();
+            java.time.LocalDate endDate = new java.sql.Date(endDateVal.getTime()).toLocalDate();
+            // Always start from the Monday of the week containing today
             java.time.LocalDate today = java.time.LocalDate.now();
             java.time.DayOfWeek dow = today.getDayOfWeek();
             int daysSinceMonday = (dow.getValue() - java.time.DayOfWeek.MONDAY.getValue() + 7) % 7;
             java.time.LocalDate thisMonday = today.minusDays(daysSinceMonday);
 
-            // Get user-specified end date
-            java.util.Date endDateVal = (java.util.Date) endDateSpinner.getValue();
-            java.time.LocalDate endDate = new java.sql.Date(endDateVal.getTime()).toLocalDate();
+            SchedulerService scheduler = new SchedulerService();
+            ScheduleResult result = scheduler.generateTimetable(
+                workdays, workStartSlot, workDurationSlots, sleepDurationSlots, tasks, events, thisMonday, endDate
+            );
+            ScheduleViewer viewer = new ScheduleViewer();
 
-            outputArea.setText(viewer.getScheduleString(result.timetable(), thisMonday, endDate));
+            // Save activities to DB if not already present (simple: add all, ignore duplicates)
+            ActivityRepository repo = new ActivityRepository();
+            for (Task t : tasks) repo.addActivity(t);
+            for (Event e : events) repo.addActivity(e);
+            repo.addActivity(new FixedActivity("Work", workDurationSlots));
+            repo.addActivity(new FixedActivity("Sleep", sleepDurationSlots));
+
+            // Save timetable to DB
+            java.util.Map<String, Integer> activityNameToId = repo.getActivityNameToIdMap();
+            repo.saveTimetable(result.getTimetable(), thisMonday, endDate, activityNameToId);
+
+            outputArea.setText(viewer.getScheduleString(result.getTimetable(), thisMonday, endDate));
         } catch (Exception ex) {
             outputArea.setText("Error: " + ex.getMessage());
         }
