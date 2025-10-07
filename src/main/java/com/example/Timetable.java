@@ -40,14 +40,19 @@ public class Timetable {
     // Overloaded: force=true allows overwriting existing activities (for events)
     public void placeAt(Activity activity, int day, int startSlot, boolean force) {
         int duration = activity.getDurationInSlots();
+        int d = day;
+        int s = startSlot;
         for (int i = 0; i < duration; i++) {
-            if (day < 0 || day >= DAYS || startSlot + i < 0 || startSlot + i >= SLOTS_PER_DAY) {
-                throw new IllegalArgumentException("Invalid day or slot for activity placement");
+            if (d < 0 || d >= DAYS || s < 0 || s >= SLOTS_PER_DAY) {
+                // Wrap to next day if slot overflows
+                d = (d + 1) % DAYS;
+                s = 0;
             }
-            if (!force && slots[day][startSlot + i] != null) {
-                throw new IllegalStateException("Slot already occupied at day " + day + ", slot " + (startSlot + i));
+            if (!force && slots[d][s] != null) {
+                throw new IllegalStateException("Slot already occupied at day " + d + ", slot " + s);
             }
-            slots[day][startSlot + i] = activity;
+            slots[d][s] = activity;
+            s++;
         }
     }
 

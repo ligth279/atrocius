@@ -207,7 +207,12 @@ public class SchedulerGUI extends JFrame {
             SchedulerService scheduler = new SchedulerService();
             ScheduleResult result = scheduler.generateTimetable(workdays, workStartSlot, workDurationSlots, sleepDurationSlots, tasks, events);
             ScheduleViewer viewer = new ScheduleViewer();
-            outputArea.setText(viewer.getScheduleString(result.timetable()));
+            // Find next Monday from today
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.DayOfWeek dow = today.getDayOfWeek();
+            int daysSinceMonday = (dow.getValue() - java.time.DayOfWeek.MONDAY.getValue() + 7) % 7;
+            java.time.LocalDate thisMonday = today.minusDays(daysSinceMonday);
+            outputArea.setText(viewer.getScheduleString(result.timetable(), thisMonday));
         } catch (Exception ex) {
             outputArea.setText("Error: " + ex.getMessage());
         }

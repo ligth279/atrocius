@@ -50,6 +50,13 @@ public class SchedulerService {
         }
 
         // 3. Distribute tasks as evenly as possible, filling any available block
+        // Determine current day and slot
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalTime now = java.time.LocalTime.now();
+        int currentDayOfWeek = today.getDayOfWeek().getValue() % 7; // 0=Mon, 6=Sun
+        int nextSlot = now.getMinute() < 30 ? now.getHour() * 2 + 1 : (now.getHour() + 1) * 2;
+        if (nextSlot >= 48) nextSlot = 47; // last slot of the day
+
         for (Task task : tasks) {
             boolean scheduled = false;
             int bestDay = -1;
@@ -65,7 +72,8 @@ public class SchedulerService {
             for (int day : daysToSearch) {
                 int currentBlock = 0;
                 int blockStart = -1;
-                for (int slot = 0; slot < 48; slot++) {
+                int slotStart = (day == currentDayOfWeek) ? nextSlot : 0;
+                for (int slot = slotStart; slot < 48; slot++) {
                     if (timetable.getSlots()[day][slot] == null) {
                         if (currentBlock == 0) blockStart = slot;
                         currentBlock++;
