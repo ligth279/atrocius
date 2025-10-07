@@ -201,6 +201,7 @@ public class SchedulerFX extends Application {
     Label sleepLabel = new Label("Sleep Duration (hours):");
     sleepDurationSpinner = new Spinner<>(1, 24, 8);
     sleepDurationSpinner.setEditable(true);
+    sleepDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
     Label sleepTip = new Label("Recommended: 7–9 hours per night");
     sleepTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
     sleepContent.getChildren().addAll(sleepHeaderBox, sleepLabel, sleepDurationSpinner, sleepTip);
@@ -215,13 +216,14 @@ public class SchedulerFX extends Application {
     Label workdaysLabel = new Label("Select Workdays:");
     // Workday checkboxes (Mon–Sun)
     // Initialize workday checkboxes (Mon–Sun) as class fields
-    monWorkBox = new CheckBox("Mon");
-    tueWorkBox = new CheckBox("Tue");
-    wedWorkBox = new CheckBox("Wed");
-    thuWorkBox = new CheckBox("Thu");
-    friWorkBox = new CheckBox("Fri");
-    satWorkBox = new CheckBox("Sat");
-    sunWorkBox = new CheckBox("Sun");
+    String checkBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 15; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
+    monWorkBox = new CheckBox("Mon"); monWorkBox.setStyle(checkBoxStyle);
+    tueWorkBox = new CheckBox("Tue"); tueWorkBox.setStyle(checkBoxStyle);
+    wedWorkBox = new CheckBox("Wed"); wedWorkBox.setStyle(checkBoxStyle);
+    thuWorkBox = new CheckBox("Thu"); thuWorkBox.setStyle(checkBoxStyle);
+    friWorkBox = new CheckBox("Fri"); friWorkBox.setStyle(checkBoxStyle);
+    satWorkBox = new CheckBox("Sat"); satWorkBox.setStyle(checkBoxStyle);
+    sunWorkBox = new CheckBox("Sun"); sunWorkBox.setStyle(checkBoxStyle);
     // Default Mon–Fri selected
     monWorkBox.setSelected(true);
     tueWorkBox.setSelected(true);
@@ -230,19 +232,28 @@ public class SchedulerFX extends Application {
     friWorkBox.setSelected(true);
     HBox workdayCheckBoxes = new HBox(10, monWorkBox, tueWorkBox, wedWorkBox, thuWorkBox, friWorkBox, satWorkBox, sunWorkBox);
     workdayCheckBoxes.setAlignment(Pos.CENTER_LEFT);
+    Label workdaysLabel2 = new Label("Select Workdays:");
+    workdaysLabel2.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 15));
+    workdaysLabel2.setPadding(new Insets(0, 0, 8, 0));
+    VBox workdayBox = new VBox(10, workdaysLabel2, workdayCheckBoxes);
+    workdayBox.setPadding(new Insets(14, 14, 14, 14));
+    workdayBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
     Label workdaysTip = new Label("Workdays repeat each week. Leave unchecked for days off.");
     workdaysTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
     Label workStartLabel = new Label("Work Start Time:");
     workHourSpinner = new Spinner<>(0, 23, 9);
     workHourSpinner.setEditable(true);
+    workHourSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
     workMinuteBox = new ComboBox<>();
     workMinuteBox.getItems().addAll("00", "30");
     workMinuteBox.setValue("00");
+    workMinuteBox.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
     HBox workStartBox = new HBox(8, workHourSpinner, new Label(":"), workMinuteBox);
     Label workDurationLabel = new Label("Work Duration (hours):");
     workDurationSpinner = new Spinner<>(1, 12, 8);
     workDurationSpinner.setEditable(true);
-    workContent.getChildren().addAll(workHeaderBox, workdaysLabel, workdayCheckBoxes, workdaysTip, workStartLabel, workStartBox, workDurationLabel, workDurationSpinner);
+    workDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
+    workContent.getChildren().setAll(workHeaderBox, workdaysLabel, workdayBox, workdaysTip, workStartLabel, workStartBox, workDurationLabel, workDurationSpinner);
 
         // Tasks content
         VBox tasksContent = new VBox(18);
@@ -252,32 +263,47 @@ public class SchedulerFX extends Application {
         tasksHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
 
         // Form fields for tasks
-        HBox taskNameBox = new HBox(8, new Label("Name:"), new TextField());
+        TextField taskNameField = new TextField();
+        taskNameField.setPromptText("Task name");
+        taskNameField.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+        HBox taskNameBox = new HBox(8, new Label("Name:"), taskNameField);
         Spinner<Integer> taskDurationSpinner = new Spinner<>(1, 24, 1);
+        taskDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
         HBox taskDurationBox = new HBox(8, new Label("Duration (hours):"), taskDurationSpinner);
         
         // Day selection with checkboxes
         Label daySelectLabel = new Label("Select Days (or none for any day):");
         daySelectLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #666;");
         CheckBox monCheckBox = new CheckBox("Mon");
+        String taskCheckBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 14; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
         CheckBox tueCheckBox = new CheckBox("Tue");
         CheckBox wedCheckBox = new CheckBox("Wed");
         CheckBox thuCheckBox = new CheckBox("Thu");
         CheckBox friCheckBox = new CheckBox("Fri");
         CheckBox satCheckBox = new CheckBox("Sat");
         CheckBox sunCheckBox = new CheckBox("Sun");
+        monCheckBox.setStyle(taskCheckBoxStyle);
+        tueCheckBox.setStyle(taskCheckBoxStyle);
+        wedCheckBox.setStyle(taskCheckBoxStyle);
+        thuCheckBox.setStyle(taskCheckBoxStyle);
+        friCheckBox.setStyle(taskCheckBoxStyle);
+        satCheckBox.setStyle(taskCheckBoxStyle);
+        sunCheckBox.setStyle(taskCheckBoxStyle);
         HBox dayCheckBoxes = new HBox(10, monCheckBox, tueCheckBox, wedCheckBox, thuCheckBox, friCheckBox, satCheckBox, sunCheckBox);
         dayCheckBoxes.setAlignment(Pos.CENTER_LEFT);
         VBox daySelectionBox = new VBox(6, daySelectLabel, dayCheckBoxes);
         
         Button addTaskBtn = new Button("Add Task");
+        addTaskBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;");
+        addTaskBtn.setOnMouseEntered(e -> addTaskBtn.setStyle("-fx-background-color: #5a67d8; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;"));
+        addTaskBtn.setOnMouseExited(e -> addTaskBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;"));
         Label addTaskMsg = new Label("");
         addTaskMsg.setStyle("-fx-text-fill: green; -fx-font-size: 12;");
 
         // List of added tasks
         VBox taskListBox = new VBox(6);
         taskListBox.setPadding(new Insets(8, 0, 0, 0));
-        taskListBox.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 8;");
+        taskListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
 
         addTaskBtn.setOnAction(e -> {
             String name = ((TextField)taskNameBox.getChildren().get(1)).getText().trim();
@@ -343,23 +369,33 @@ public class SchedulerFX extends Application {
         eventsHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
 
         // Form fields
-        HBox nameBox = new HBox(8, new Label("Name:"), new TextField());
-        DatePicker eventDatePicker = new DatePicker();
-        HBox dateBox = new HBox(8, new Label("Date:"), eventDatePicker);
-        Spinner<Integer> hourSpinner = new Spinner<>(0, 23, 18);
-        Spinner<Integer> minuteSpinner = new Spinner<>(0, 59, 0, 1);
-        Spinner<Integer> durationSpinner = new Spinner<>(1, 24, 1);
-        HBox timeBox = new HBox(8, new Label("Hour:"), hourSpinner, new Label("Minute:"), minuteSpinner, new Label("Duration (h):"), durationSpinner);
-        Button addEventBtn = new Button("Add Event");
-        Label addEventMsg = new Label("");
-        addEventMsg.setStyle("-fx-text-fill: green; -fx-font-size: 12;");
+    TextField eventNameField = new TextField();
+    eventNameField.setPromptText("Event name");
+    eventNameField.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+    HBox nameBox = new HBox(8, new Label("Name:"), eventNameField);
+    DatePicker eventDatePicker = new DatePicker();
+    eventDatePicker.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+    HBox dateBox = new HBox(8, new Label("Date:"), eventDatePicker);
+    Spinner<Integer> hourSpinner = new Spinner<>(0, 23, 18);
+    hourSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+    Spinner<Integer> minuteSpinner = new Spinner<>(0, 59, 0, 1);
+    minuteSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+    Spinner<Integer> durationSpinner = new Spinner<>(1, 24, 1);
+    durationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
+    HBox timeBox = new HBox(8, new Label("Hour:"), hourSpinner, new Label("Minute:"), minuteSpinner, new Label("Duration (h):"), durationSpinner);
+    Button addEventBtn = new Button("Add Event");
+    addEventBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;");
+    addEventBtn.setOnMouseEntered(e -> addEventBtn.setStyle("-fx-background-color: #5a67d8; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;"));
+    addEventBtn.setOnMouseExited(e -> addEventBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;"));
+    Label addEventMsg = new Label("");
+    addEventMsg.setStyle("-fx-text-fill: green; -fx-font-size: 12;");
 
 
 
         // List of added events (uses persistent class field eventList)
         VBox eventListBox = new VBox(6);
-        eventListBox.setPadding(new Insets(8, 0, 0, 0));
-        eventListBox.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 8;");
+    eventListBox.setPadding(new Insets(8, 0, 0, 0));
+    eventListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
 
         addEventBtn.setOnAction(e -> {
             String name = ((TextField)nameBox.getChildren().get(1)).getText().trim();
