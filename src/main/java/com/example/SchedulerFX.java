@@ -76,16 +76,37 @@ public class SchedulerFX extends Application {
     // Store events and tasks added in the generator panel
     private java.util.List<Event> eventList = new java.util.ArrayList<>();
     private java.util.List<Task> taskList = new java.util.ArrayList<>();
+    
+    // Dark mode state
+    private boolean darkMode = false;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Smart Weekly Scheduler");
         root = new BorderPane();
-        root.setStyle("-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);");
+        applyRootBackground();
         showLandingPanel();
         Scene scene = new Scene(root, 1000, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+    
+    // Apply background based on dark mode
+    private void applyRootBackground() {
+        if (darkMode) {
+            root.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e 0%, #16213e 100%);");
+        } else {
+            root.setStyle("-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);");
+        }
+    }
+    
+    // Toggle dark mode and refresh current panel
+    private void toggleDarkMode() {
+        darkMode = !darkMode;
+        applyRootBackground();
+        // Refresh the current panel by re-showing it
+        // We'll track the current panel state
+        showLandingPanel(); // For now, always return to landing when toggling
     }
 
     // Landing panel with navigation
@@ -93,15 +114,29 @@ public class SchedulerFX extends Application {
         VBox landing = new VBox(30);
         landing.setAlignment(Pos.CENTER);
         landing.setPadding(new Insets(60));
-        landing.setStyle("-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 20;");
+        
+        // Dynamic styling based on dark mode
+        if (darkMode) {
+            landing.setStyle("-fx-background-color: rgba(30,32,48,0.95); -fx-background-radius: 20;");
+        } else {
+            landing.setStyle("-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 20;");
+        }
+
+        // Theme toggle button at top right
+        Button themeToggle = new Button(darkMode ? "☀️" : "🌙");
+        themeToggle.setStyle("-fx-background-color: transparent; -fx-font-size: 24; -fx-cursor: hand;");
+        themeToggle.setOnAction(e -> toggleDarkMode());
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
+        topBar.getChildren().add(themeToggle);
 
         Label title = new Label("🗓️ Smart Scheduler");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 36));
-        title.setTextFill(Color.rgb(102, 126, 234));
+        title.setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(102, 126, 234));
 
         Label subtitle = new Label("Plan your week, your way.");
         subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 18));
-        subtitle.setTextFill(Color.rgb(118, 75, 162));
+        subtitle.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(118, 75, 162));
 
         Button seeBtn = new Button("See Timetable");
         seeBtn.setStyle("-fx-background-color: #48bb78; -fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 16 40; -fx-background-radius: 30;");
@@ -111,7 +146,7 @@ public class SchedulerFX extends Application {
         genBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 16 40; -fx-background-radius: 30;");
         genBtn.setOnAction(e -> showGeneratorPanel());
 
-        landing.getChildren().addAll(title, subtitle, seeBtn, genBtn);
+        landing.getChildren().addAll(topBar, title, subtitle, seeBtn, genBtn);
         root.setCenter(landing);
         root.setLeft(null);
         root.setRight(null);
@@ -122,14 +157,21 @@ public class SchedulerFX extends Application {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(40));
         panel.setAlignment(Pos.TOP_CENTER);
-        panel.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
+        
+        // Dynamic styling based on dark mode
+        if (darkMode) {
+            panel.setStyle("-fx-background-color: rgba(30,32,48,0.97); -fx-background-radius: 18;");
+        } else {
+            panel.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
+        }
 
         Label header = new Label("📅 View Your Timetable");
         header.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        header.setTextFill(Color.rgb(102, 126, 234));
+        header.setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(102, 126, 234));
 
         calendarInfoLabel = new Label("Select a date to view your schedule.");
         calendarInfoLabel.setFont(Font.font("Segoe UI", 14));
+        calendarInfoLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
 
         // Fetch timetable dates
         ActivityRepository repo = new ActivityRepository();
@@ -138,7 +180,9 @@ public class SchedulerFX extends Application {
         calendarGridBox = new VBox(10);
         calendarGridBox.setAlignment(Pos.CENTER);
         if (timetableDates.isEmpty()) {
-            calendarGridBox.getChildren().add(new Label("No timetables found. Generate one first!"));
+            Label emptyLabel = new Label("No timetables found. Generate one first!");
+            emptyLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+            calendarGridBox.getChildren().add(emptyLabel);
         } else {
             calendarGridBox.getChildren().add(createCalendarGrid());
         }
@@ -156,14 +200,23 @@ public class SchedulerFX extends Application {
     // Generator panel for new timetable
     private void showGeneratorPanel() {
         BorderPane genRoot = new BorderPane();
-        genRoot.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
+        // Dynamic styling based on dark mode
+        if (darkMode) {
+            genRoot.setStyle("-fx-background-color: rgba(30,32,48,0.97); -fx-background-radius: 18;");
+        } else {
+            genRoot.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
+        }
 
         // Left nav panel
-
     VBox navPanel = new VBox(20);
     navPanel.setPadding(new Insets(30, 10, 30, 30));
     navPanel.setAlignment(Pos.TOP_LEFT);
-    navPanel.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 16; -fx-border-width: 0 2 0 0; -fx-border-color: #cbd5e0;");
+    // Dynamic nav panel styling
+    if (darkMode) {
+        navPanel.setStyle("-fx-background-color: #1e2030; -fx-background-radius: 16; -fx-border-width: 0 2 0 0; -fx-border-color: #3a3f5c;");
+    } else {
+        navPanel.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 16; -fx-border-width: 0 2 0 0; -fx-border-color: #cbd5e0;");
+    }
 
     Button sleepBtn = new Button("😴 Sleep");
     Button workBtn = new Button("🏫 Work/School");
@@ -175,7 +228,11 @@ public class SchedulerFX extends Application {
     tasksBtn.setMaxWidth(Double.MAX_VALUE);
     eventsBtn.setMaxWidth(Double.MAX_VALUE);
     generateBtn.setMaxWidth(Double.MAX_VALUE);
-    String navDefault = "-fx-background-color: #e2e8f0; -fx-font-size: 16; -fx-background-radius: 12;";
+    
+    // Dynamic button styling
+    String navDefault = darkMode 
+        ? "-fx-background-color: #2d3250; -fx-text-fill: #cbd5e0; -fx-font-size: 16; -fx-background-radius: 12;" 
+        : "-fx-background-color: #e2e8f0; -fx-font-size: 16; -fx-background-radius: 12;";
     String navSelected = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 16; -fx-background-radius: 12; -fx-font-weight: bold;";
     sleepBtn.setStyle(navSelected);
     workBtn.setStyle(navDefault);
@@ -191,29 +248,41 @@ public class SchedulerFX extends Application {
         // Right content panel (category details)
         StackPane contentPane = new StackPane();
 
-    // Sleep content (modernized UI)
+    // Sleep content (modernized UI with dark mode)
     VBox sleepContent = new VBox(18);
     sleepContent.setAlignment(Pos.TOP_LEFT);
     sleepContent.setPadding(new Insets(40, 40, 40, 40));
-    sleepContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    if (darkMode) {
+        sleepContent.setStyle("-fx-background-color: #2d3250; -fx-background-radius: 18; -fx-border-color: #3a3f5c; -fx-border-width: 1;");
+    } else {
+        sleepContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    }
     HBox sleepHeaderBox = new HBox(10, new Label("😴"), new Label("Sleep Settings"));
     ((Label)sleepHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+    ((Label)sleepHeaderBox.getChildren().get(1)).setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(45, 55, 72));
     Label sleepLabel = new Label("Sleep Duration (hours):");
+    sleepLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     sleepDurationSpinner = new Spinner<>(1, 24, 8);
     sleepDurationSpinner.setEditable(true);
     sleepDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
     Label sleepTip = new Label("Recommended: 7–9 hours per night");
-    sleepTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
+    sleepTip.setStyle(darkMode ? "-fx-font-size: 12; -fx-text-fill: #94a3b8;" : "-fx-font-size: 12; -fx-text-fill: #888;");
     sleepContent.getChildren().addAll(sleepHeaderBox, sleepLabel, sleepDurationSpinner, sleepTip);
 
-    // Work/School content (modernized UI)
+    // Work/School content (modernized UI with dark mode)
     VBox workContent = new VBox(18);
     workContent.setAlignment(Pos.TOP_LEFT);
     workContent.setPadding(new Insets(40, 40, 40, 40));
-    workContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    if (darkMode) {
+        workContent.setStyle("-fx-background-color: #2d3250; -fx-background-radius: 18; -fx-border-color: #3a3f5c; -fx-border-width: 1;");
+    } else {
+        workContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    }
     HBox workHeaderBox = new HBox(10, new Label("🏫"), new Label("Work/School Settings"));
     ((Label)workHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+    ((Label)workHeaderBox.getChildren().get(1)).setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(45, 55, 72));
     Label workdaysLabel = new Label("Select Workdays:");
+    workdaysLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     // Workday checkboxes (Mon–Sun)
     // Initialize workday checkboxes (Mon–Sun) as class fields
     String checkBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 15; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
@@ -234,13 +303,15 @@ public class SchedulerFX extends Application {
     workdayCheckBoxes.setAlignment(Pos.CENTER_LEFT);
     Label workdaysLabel2 = new Label("Select Workdays:");
     workdaysLabel2.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 15));
+    workdaysLabel2.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     workdaysLabel2.setPadding(new Insets(0, 0, 8, 0));
     VBox workdayBox = new VBox(10, workdaysLabel2, workdayCheckBoxes);
     workdayBox.setPadding(new Insets(14, 14, 14, 14));
     workdayBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
     Label workdaysTip = new Label("Workdays repeat each week. Leave unchecked for days off.");
-    workdaysTip.setStyle("-fx-font-size: 12; -fx-text-fill: #888;");
+    workdaysTip.setStyle(darkMode ? "-fx-font-size: 12; -fx-text-fill: #94a3b8;" : "-fx-font-size: 12; -fx-text-fill: #888;");
     Label workStartLabel = new Label("Work Start Time:");
+    workStartLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     workHourSpinner = new Spinner<>(0, 23, 9);
     workHourSpinner.setEditable(true);
     workHourSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
@@ -250,6 +321,7 @@ public class SchedulerFX extends Application {
     workMinuteBox.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
     HBox workStartBox = new HBox(8, workHourSpinner, new Label(":"), workMinuteBox);
     Label workDurationLabel = new Label("Work Duration (hours):");
+    workDurationLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     workDurationSpinner = new Spinner<>(1, 12, 8);
     workDurationSpinner.setEditable(true);
     workDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
@@ -259,23 +331,34 @@ public class SchedulerFX extends Application {
         VBox tasksContent = new VBox(18);
         tasksContent.setAlignment(Pos.TOP_LEFT);
         tasksContent.setPadding(new Insets(40, 40, 40, 40));
-        Label tasksHeader = new Label("📝 Tasks");
-        tasksHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        if (darkMode) {
+            tasksContent.setStyle("-fx-background-color: #2d3250; -fx-background-radius: 18; -fx-border-color: #3a3f5c; -fx-border-width: 1;");
+        } else {
+            tasksContent.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+        }
+        
+        HBox tasksHeaderBox = new HBox(10, new Label("📝"), new Label("Tasks"));
+        ((Label)tasksHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        ((Label)tasksHeaderBox.getChildren().get(1)).setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(45, 55, 72));
 
         // Form fields for tasks
+        Label taskNameLabel = new Label("Task Name:");
+        taskNameLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
         TextField taskNameField = new TextField();
         taskNameField.setPromptText("Task name");
         taskNameField.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
-        HBox taskNameBox = new HBox(8, new Label("Name:"), taskNameField);
+        
+        Label taskDurationLabel = new Label("Duration (hours):");
+        taskDurationLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
         Spinner<Integer> taskDurationSpinner = new Spinner<>(1, 24, 1);
         taskDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
-        HBox taskDurationBox = new HBox(8, new Label("Duration (hours):"), taskDurationSpinner);
         
         // Day selection with checkboxes
         Label daySelectLabel = new Label("Select Days (or none for any day):");
-        daySelectLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #666;");
+        daySelectLabel.setStyle(darkMode ? "-fx-font-size: 15; -fx-text-fill: #cbd5e0;" : "-fx-font-size: 15; -fx-text-fill: #2d3748;");
+        daySelectLabel.setPadding(new Insets(0, 0, 8, 0));
         CheckBox monCheckBox = new CheckBox("Mon");
-        String taskCheckBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 14; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
+        String taskCheckBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 15; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
         CheckBox tueCheckBox = new CheckBox("Tue");
         CheckBox wedCheckBox = new CheckBox("Wed");
         CheckBox thuCheckBox = new CheckBox("Thu");
@@ -291,7 +374,11 @@ public class SchedulerFX extends Application {
         sunCheckBox.setStyle(taskCheckBoxStyle);
         HBox dayCheckBoxes = new HBox(10, monCheckBox, tueCheckBox, wedCheckBox, thuCheckBox, friCheckBox, satCheckBox, sunCheckBox);
         dayCheckBoxes.setAlignment(Pos.CENTER_LEFT);
-        VBox daySelectionBox = new VBox(6, daySelectLabel, dayCheckBoxes);
+        VBox daySelectionBox = new VBox(10, daySelectLabel, dayCheckBoxes);
+        daySelectionBox.setPadding(new Insets(14, 14, 14, 14));
+        daySelectionBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+        Label daySelectTip = new Label("Tasks are scheduled during free time slots.");
+        daySelectTip.setStyle(darkMode ? "-fx-font-size: 12; -fx-text-fill: #94a3b8;" : "-fx-font-size: 12; -fx-text-fill: #888;");
         
         Button addTaskBtn = new Button("Add Task");
         addTaskBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;");
@@ -306,7 +393,7 @@ public class SchedulerFX extends Application {
         taskListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
 
         addTaskBtn.setOnAction(e -> {
-            String name = ((TextField)taskNameBox.getChildren().get(1)).getText().trim();
+            String name = taskNameField.getText().trim();
             int duration = taskDurationSpinner.getValue();
             
             // Collect selected days
@@ -343,7 +430,7 @@ public class SchedulerFX extends Application {
             addTaskMsg.setText("Task added!");
             addTaskMsg.setStyle("-fx-text-fill: green; -fx-font-size: 12;");
             // Clear fields
-            ((TextField)taskNameBox.getChildren().get(1)).setText("");
+            taskNameField.setText("");
             taskDurationSpinner.getValueFactory().setValue(1);
             monCheckBox.setSelected(false);
             tueCheckBox.setSelected(false);
@@ -358,24 +445,36 @@ public class SchedulerFX extends Application {
         // On panel show, always update task list display to reflect current persistent taskList
         updateTaskListBox(taskListBox);
 
-        tasksContent.getChildren().addAll(tasksHeader, taskNameBox, taskDurationBox, daySelectionBox, addTaskBtn, addTaskMsg, new Label("Tasks:"), taskListBox);
+        Label addedTasksLabel = new Label("Added Tasks:");
+        addedTasksLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+        tasksContent.getChildren().addAll(tasksHeaderBox, taskNameLabel, taskNameField, taskDurationLabel, taskDurationSpinner, daySelectionBox, daySelectTip, addTaskBtn, addTaskMsg, addedTasksLabel, taskListBox);
 
 
         // Events content
         VBox eventsContent = new VBox(18);
         eventsContent.setAlignment(Pos.TOP_LEFT);
         eventsContent.setPadding(new Insets(40, 40, 40, 40));
-        Label eventsHeader = new Label("🎉 Events");
-        eventsHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        eventsContent.setStyle(darkMode ? "-fx-background-color: #2d3250; -fx-background-radius: 18; -fx-border-color: #475569; -fx-border-width: 1;" : "-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+        
+        HBox eventsHeaderBox = new HBox(10, new Label("🎉"), new Label("Events"));
+        ((Label)eventsHeaderBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        ((Label)eventsHeaderBox.getChildren().get(1)).setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(45, 55, 72));
 
         // Form fields
+    Label eventNameLabel = new Label("Event Name:");
+    eventNameLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     TextField eventNameField = new TextField();
     eventNameField.setPromptText("Event name");
     eventNameField.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
-    HBox nameBox = new HBox(8, new Label("Name:"), eventNameField);
+    
+    Label eventDateLabel = new Label("Event Date:");
+    eventDateLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
     DatePicker eventDatePicker = new DatePicker();
     eventDatePicker.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
-    HBox dateBox = new HBox(8, new Label("Date:"), eventDatePicker);
+    
+    Label eventTimeLabel = new Label("Event Time & Duration:");
+    eventTimeLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+    eventTimeLabel.setPadding(new Insets(0, 0, 8, 0));
     Spinner<Integer> hourSpinner = new Spinner<>(0, 23, 18);
     hourSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
     Spinner<Integer> minuteSpinner = new Spinner<>(0, 59, 0, 1);
@@ -383,6 +482,17 @@ public class SchedulerFX extends Application {
     Spinner<Integer> durationSpinner = new Spinner<>(1, 24, 1);
     durationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 15;");
     HBox timeBox = new HBox(8, new Label("Hour:"), hourSpinner, new Label("Minute:"), minuteSpinner, new Label("Duration (h):"), durationSpinner);
+    // Apply dark mode to inline labels in timeBox
+    ((Label)timeBox.getChildren().get(0)).setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+    ((Label)timeBox.getChildren().get(2)).setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+    ((Label)timeBox.getChildren().get(4)).setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+    timeBox.setAlignment(Pos.CENTER_LEFT);
+    VBox eventTimeBox = new VBox(10, eventTimeLabel, timeBox);
+    eventTimeBox.setPadding(new Insets(14, 14, 14, 14));
+    eventTimeBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
+    Label eventTimeTip = new Label("Events are fixed at specific times.");
+    eventTimeTip.setStyle(darkMode ? "-fx-font-size: 12; -fx-text-fill: #94a3b8;" : "-fx-font-size: 12; -fx-text-fill: #888;");
+    
     Button addEventBtn = new Button("Add Event");
     addEventBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;");
     addEventBtn.setOnMouseEntered(e -> addEventBtn.setStyle("-fx-background-color: #5a67d8; -fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 8 24; -fx-cursor: hand;"));
@@ -398,7 +508,7 @@ public class SchedulerFX extends Application {
     eventListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
 
         addEventBtn.setOnAction(e -> {
-            String name = ((TextField)nameBox.getChildren().get(1)).getText().trim();
+            String name = eventNameField.getText().trim();
             java.time.LocalDate date = eventDatePicker.getValue();
             int hour = hourSpinner.getValue();
             int minute = minuteSpinner.getValue();
@@ -417,7 +527,7 @@ public class SchedulerFX extends Application {
             addEventMsg.setText("Event added!");
             addEventMsg.setStyle("-fx-text-fill: green; -fx-font-size: 12;");
             // Clear fields
-            ((TextField)nameBox.getChildren().get(1)).setText("");
+            eventNameField.setText("");
             eventDatePicker.setValue(null);
             hourSpinner.getValueFactory().setValue(18);
             minuteSpinner.getValueFactory().setValue(0);
@@ -428,7 +538,9 @@ public class SchedulerFX extends Application {
         // On panel show, always update event list display to reflect current persistent eventList
         updateEventListBox(eventListBox);
 
-        eventsContent.getChildren().addAll(eventsHeader, nameBox, dateBox, timeBox, addEventBtn, addEventMsg, new Label("Events:"), eventListBox);
+        Label addedEventsLabel = new Label("Added Events:");
+        addedEventsLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+        eventsContent.getChildren().addAll(eventsHeaderBox, eventNameLabel, eventNameField, eventDateLabel, eventDatePicker, eventTimeBox, eventTimeTip, addEventBtn, addEventMsg, addedEventsLabel, eventListBox);
 
         // Show sleep by default
         contentPane.getChildren().setAll(sleepContent);
