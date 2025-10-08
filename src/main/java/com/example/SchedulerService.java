@@ -74,32 +74,54 @@ public class SchedulerService {
                 int weekday = date.getDayOfWeek().getValue(); // 1=Mon, 7=Sun
                 if (task.getTargetDay() != null && weekday - 1 != task.getTargetDay()) continue;
                 Activity[] slots = timetable.getSlots()[day];
-                int currentBlock = 0;
-                int blockStart = -1;
-                for (int slot = 0; slot < 48; slot++) {
-                    if (slots[slot] == null) {
-                        if (currentBlock == 0) blockStart = slot;
-                        currentBlock++;
-                    } else {
-                        if (currentBlock >= task.getDurationInSlots()) {
-                            for (int i = 0; i < task.getDurationInSlots(); i++) {
-                                slots[blockStart + i] = task;
-                            }
-                            break;
-                        }
-                        currentBlock = 0;
-                        blockStart = -1;
-                    }
+
+                // Preferred time window slots
+                int morningStart = 0, morningEnd = 23;   // 00:00 to 12:00 (slot 0-23)
+                int eveningStart = 32, eveningEnd = 47;  // 16:00 to 24:00 (slot 32-47)
+                boolean placed = false;
+
+                // Try preferred window first
+                String pref = task.getPreferredTime();
+                if ("morning".equals(pref)) {
+                    placed = tryPlaceTaskInWindow(slots, task, morningStart, morningEnd);
+                } else if ("evening".equals(pref)) {
+                    placed = tryPlaceTaskInWindow(slots, task, eveningStart, eveningEnd);
                 }
+
+                // If not placed, try anywhere
+                if (!placed) {
+                    placed = tryPlaceTaskInWindow(slots, task, 0, 47);
+                }
+            }
+        }
+        return new ScheduleResult(timetable, unscheduledTasks);
+    }
+
+    // Helper: Try to place task in a window of slots, returns true if placed
+    private boolean tryPlaceTaskInWindow(Activity[] slots, Task task, int start, int end) {
+        int currentBlock = 0;
+        int blockStart = -1;
+        for (int slot = start; slot <= end; slot++) {
+            if (slots[slot] == null) {
+                if (currentBlock == 0) blockStart = slot;
+                currentBlock++;
+            } else {
                 if (currentBlock >= task.getDurationInSlots()) {
                     for (int i = 0; i < task.getDurationInSlots(); i++) {
                         slots[blockStart + i] = task;
                     }
+                    return true;
                 }
+                currentBlock = 0;
+                blockStart = -1;
             }
         }
-
-
-        return new ScheduleResult(timetable, unscheduledTasks);
+        if (currentBlock >= task.getDurationInSlots()) {
+            for (int i = 0; i < task.getDurationInSlots(); i++) {
+                slots[blockStart + i] = task;
+            }
+            return true;
+        }
+        return false;
     }
 }
