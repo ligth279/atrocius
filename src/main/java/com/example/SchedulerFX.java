@@ -1,767 +1,971 @@
-// ...existing code...
 package com.example;
 
+import com.example.ui.ActivityCard;
+import com.example.ui.SchedulerViewModel;
+import com.example.ui.TimetableDayView;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-import javafx.scene.paint.Color;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import java.util.function.BiConsumer;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
-    
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.LinkedHashSet;
+import java.time.temporal.ChronoUnit;
+
+/**
+ * Primary JavaFX entry point presenting the playful, themeable scheduler UI.
+ */
 public class SchedulerFX extends Application {
-    // ========== HELPER METHODS FOR DARK MODE & UI COMPONENTS ==========
-    
-    /**
-     * Apply dark mode text color to a label.
-     * @param label The label to style
-     * @param isHeader True for header color (brighter), false for regular text
-     */
-    private void applyDarkModeTextColor(Label label, boolean isHeader) {
-        if (isHeader) {
-            label.setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(45, 55, 72));
-        } else {
-            label.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
-        }
-    }
-    
-    /**
-     * Create a section header with icon and title.
-     */
-    private HBox createSectionHeader(String icon, String title) {
-        HBox headerBox = new HBox(10, new Label(icon), new Label(title));
-        ((Label)headerBox.getChildren().get(1)).setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        applyDarkModeTextColor((Label)headerBox.getChildren().get(1), true);
-        return headerBox;
-    }
-    
-    /**
-     * Create a styled content VBox with consistent padding and dark mode support.
-     */
-    private VBox createContentBox() {
-        VBox content = new VBox(18);
-        content.setAlignment(Pos.TOP_LEFT);
-        content.setPadding(new Insets(40, 40, 40, 40));
-        if (darkMode) {
-            content.setStyle("-fx-background-color: #2d3250; -fx-background-radius: 18; -fx-border-color: #475569; -fx-border-width: 1;");
-        } else {
-            content.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 18; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
-        }
-        return content;
-    }
-    
-    /**
-     * Apply hover effects to a button.
-     */
-    private void applyButtonHoverEffect(Button button, String baseStyle, String hoverStyle) {
-        button.setStyle(baseStyle);
-        button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
-        button.setOnMouseExited(e -> button.setStyle(baseStyle));
-    }
-    
-    /**
-     * Create a list of day checkboxes (Mon-Sun).
-     */
-    private java.util.List<CheckBox> createDayCheckBoxes(String style) {
-        java.util.List<CheckBox> boxes = new java.util.ArrayList<>();
-        String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-        for (String day : days) {
-            CheckBox cb = new CheckBox(day);
-            cb.setStyle(style);
-            boxes.add(cb);
-        }
-        return boxes;
-    }
-    
-    /**
-     * Update navigation button styles with one selected and others default.
-     */
-    private void updateNavButtonStyles(String navDefault, String navSelected, Button selectedBtn, Button... otherButtons) {
-        selectedBtn.setStyle(navSelected);
-        for (Button btn : otherButtons) {
-            btn.setStyle(navDefault);
-        }
-    }
-    
-    // ========== END HELPER METHODS ==========
-    
-    // Helper to update the task list UI in the generator panel
-    private void updateTaskListBox(VBox taskListBox) {
-        taskListBox.getChildren().clear();
-        for (int i = 0; i < taskList.size(); i++) {
-            Task task = taskList.get(i);
-            String daysStr = (task.getTargetDay() != null) ? " on day " + (task.getTargetDay() + 1) : " (any day)";
-            String label = task.getName() + ", " + task.getDurationInSlots() + " slots" + daysStr;
-            Button removeBtn = new Button("Remove");
-            int idx = i;
-            removeBtn.setOnAction(rm -> {
-                taskList.remove(idx);
-                updateTaskListBox(taskListBox);
-            });
-            HBox row = new HBox(8, new Label(label), removeBtn);
-            row.setAlignment(Pos.CENTER_LEFT);
-            taskListBox.getChildren().add(row);
-        }
-    }
-    
-    // Helper to update the event list UI in the generator panel
-    private void updateEventListBox(VBox eventListBox) {
-        eventListBox.getChildren().clear();
-        for (int i = 0; i < eventList.size(); i++) {
-            Event ev = eventList.get(i);
-            String label = ev.getName() + ", " + ev.getEventDate() + ", " + (ev.getStartSlot()/2) + ":" + ((ev.getStartSlot()%2)*30 == 0 ? "00" : "30") + ", " + (ev.getDurationInSlots()/2) + "h";
-            Button removeBtn = new Button("Remove");
-            int idx = i;
-            removeBtn.setOnAction(rm -> {
-                eventList.remove(idx);
-                updateEventListBox(eventListBox);
-            });
-            HBox row = new HBox(8, new Label(label), removeBtn);
-            row.setAlignment(Pos.CENTER_LEFT);
-            eventListBox.getChildren().add(row);
-        }
-    }
-    // UI fields for generator panel
-    // private TextField workdaysField; // replaced by checkboxes
-    // Workday checkboxes (Mon–Sun) for work section
-    private CheckBox monWorkBox;
-    private CheckBox tueWorkBox;
-    private CheckBox wedWorkBox;
-    private CheckBox thuWorkBox;
-    private CheckBox friWorkBox;
-    private CheckBox satWorkBox;
-    private CheckBox sunWorkBox;
+
+    private final SchedulerViewModel viewModel = new SchedulerViewModel();
+
+    private BorderPane root;
+
+    // Generator controls
+    private Spinner<Integer> sleepDurationSpinner;
+    private CheckBox[] workdayBoxes;
     private Spinner<Integer> workHourSpinner;
     private ComboBox<String> workMinuteBox;
     private Spinner<Integer> workDurationSpinner;
-    private Spinner<Integer> sleepDurationSpinner;
     private DatePicker endDatePicker;
-    private TextArea outputArea;
-    // Calendar panel fields
-    private java.util.List<String> timetableDates;
-    // Main root
-    private BorderPane root;
-    // Store events and tasks added in the generator panel
-    private java.util.List<Event> eventList = new java.util.ArrayList<>();
-    private java.util.List<Task> taskList = new java.util.ArrayList<>();
-    
-    // Dark mode state
-    private boolean darkMode = false;
+    private Label generatorStatusLabel;
+
+    // Task inputs
+    private TextField taskNameField;
+    private Spinner<Integer> taskHourSpinner;
+    private ComboBox<String> taskMinuteBox;
+    private CheckBox[] taskDayBoxes;
+    private ToggleGroup taskTimeGroup;
+    private Label taskStatusLabel;
+    private ListView<Task> taskListView;
+
+    // Event inputs
+    private TextField eventNameField;
+    private DatePicker eventDatePicker;
+    private Spinner<Integer> eventHourSpinner;
+    private ComboBox<String> eventMinuteBox;
+    private Spinner<Integer> eventDurationSpinner;
+    private Label eventStatusLabel;
+    private ListView<Event> eventListView;
 
     @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle("Smart Weekly Scheduler");
-        // Set window icon
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/icons/calendar-blue.png")));
+    public void start(Stage stage) {
+        stage.setTitle("Smart Weekly Scheduler");
+        Image icon = new Image(Objects.requireNonNull(
+                getClass().getResourceAsStream("/icons/calendar-blue.png")));
+        stage.getIcons().add(icon);
+
         root = new BorderPane();
-        applyRootBackground();
-        showLandingPanel();
-        Scene scene = new Scene(root, 1000, 700);
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-    
-    // Apply background based on dark mode
-    private void applyRootBackground() {
-        if (darkMode) {
-            root.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e 0%, #16213e 100%);");
-        } else {
-            root.setStyle("-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);");
-        }
-    }
-    
-    // Toggle dark mode and refresh current panel
-    private void toggleDarkMode() {
-        darkMode = !darkMode;
-        applyRootBackground();
-        // Refresh the current panel by re-showing it
-        // We'll track the current panel state
-        showLandingPanel(); // For now, always return to landing when toggling
+        root.getStyleClass().add("app-root");
+        bindDarkModeClass(root);
+
+        Scene scene = new Scene(root, 1120, 760);
+        scene.getStylesheets().add(Objects.requireNonNull(
+                getClass().getResource("/styles/theme.css")).toExternalForm());
+        stage.setScene(scene);
+        stage.show();
+
+        showLandingView();
     }
 
-    // Landing panel with navigation
-    private void showLandingPanel() {
-        VBox landing = new VBox(30);
-        landing.setAlignment(Pos.CENTER);
-        landing.setPadding(new Insets(60));
-        
-        // Dynamic styling based on dark mode
-        if (darkMode) {
-            landing.setStyle("-fx-background-color: rgba(30,32,48,0.95); -fx-background-radius: 20;");
-        } else {
-            landing.setStyle("-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 20;");
-        }
+    private void showLandingView() {
+        Node landing = buildLandingPane();
+        root.setCenter(landing);
+        animateIn(landing);
+    }
 
-        // Theme toggle button at top right
-        Button themeToggle = new Button(darkMode ? "☀️" : "🌙");
-        themeToggle.setStyle("-fx-background-color: transparent; -fx-font-size: 24; -fx-cursor: hand;");
-        themeToggle.setOnAction(e -> toggleDarkMode());
-        HBox topBar = new HBox();
-        topBar.setAlignment(Pos.TOP_RIGHT);
-        topBar.getChildren().add(themeToggle);
+
+    private void showCalendarView() {
+        Node calendar = buildCalendarPane();
+        root.setCenter(calendar);
+        animateIn(calendar);
+    }
+
+    private void showGeneratorView() {
+        Node generator = buildGeneratorPane();
+        root.setCenter(generator);
+        animateIn(generator);
+    }
+
+    private void showDayView(String date) {
+        Node day = buildDayPane(date);
+        root.setCenter(day);
+        animateIn(day);
+    }
+
+    // ------------------------------------------------------------------
+    // View builders
+    // ------------------------------------------------------------------
+
+    private Node buildLandingPane() {
+        BorderPane container = new BorderPane();
+        container.setPadding(new Insets(64));
+        bindDarkModeClass(container);
+
+        Button themeToggle = createThemeToggle();
+        BorderPane.setAlignment(themeToggle, Pos.TOP_RIGHT);
+        container.setTop(themeToggle);
+
+        VBox hero = new VBox(24);
+        hero.setAlignment(Pos.CENTER);
+        hero.setSpacing(18);
+        hero.setFillWidth(false);
+        styleSurface(hero);
 
         Label title = new Label("🗓️ Smart Scheduler");
-        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 36));
-        title.setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(102, 126, 234));
+        styleHeading(title, "heading-title");
 
         Label subtitle = new Label("Plan your week, your way.");
-        subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 18));
-        subtitle.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(118, 75, 162));
+        subtitle.getStyleClass().add("heading-subtitle");
+        bindDarkModeClass(subtitle);
 
-        Button seeBtn = new Button("See Timetable");
-        seeBtn.setStyle("-fx-background-color: #48bb78; -fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 16 40; -fx-background-radius: 30;");
-        seeBtn.setOnAction(e -> showCalendarPanel());
+        Label tagline = new Label("Bright, playful, and productive scheduling for every week.");
+        tagline.getStyleClass().add("body-label");
+        bindDarkModeClass(tagline);
 
-        Button genBtn = new Button("Generate New Timetable");
-        genBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 16 40; -fx-background-radius: 30;");
-        genBtn.setOnAction(e -> showGeneratorPanel());
+        Button calendarBtn = createPrimaryButton("See Timetable");
+        calendarBtn.setOnAction(e -> showCalendarView());
 
-        landing.getChildren().addAll(topBar, title, subtitle, seeBtn, genBtn);
-        root.setCenter(landing);
-        root.setLeft(null);
-        root.setRight(null);
+        Button generatorBtn = createPrimaryButton("Generate New Timetable");
+        generatorBtn.setOnAction(e -> showGeneratorView());
+
+        hero.getChildren().addAll(title, subtitle, tagline, calendarBtn, generatorBtn);
+        container.setCenter(hero);
+        return container;
     }
 
-    // Calendar panel for viewing timetable by date
-    private void showCalendarPanel() {
-        VBox panel = new VBox(20);
-        panel.setPadding(new Insets(40));
-        panel.setAlignment(Pos.TOP_CENTER);
-        
-        // Dynamic styling based on dark mode
-        if (darkMode) {
-            panel.setStyle("-fx-background-color: rgba(30,32,48,0.97); -fx-background-radius: 18;");
-        } else {
-            panel.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
-        }
+    private Node buildCalendarPane() {
+        viewModel.refreshTimetableDates();
+
+        BorderPane container = new BorderPane();
+        container.setPadding(new Insets(48));
+        bindDarkModeClass(container);
+
+        Button themeToggle = createThemeToggle();
+        Button backBtn = createSecondaryButton("⬅ Back");
+        backBtn.setOnAction(e -> showLandingView());
+
+        Region spacer = new Region();
+        HBox topBar = new HBox(16, backBtn, spacer, themeToggle);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        bindDarkModeClass(topBar);
+        BorderPane.setMargin(topBar, new Insets(0, 0, 24, 0));
+        container.setTop(topBar);
+
+        VBox content = new VBox(24);
+        content.setAlignment(Pos.TOP_CENTER);
+        styleSurface(content);
 
         Label header = new Label("📅 View Your Timetable");
-        header.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        header.setTextFill(darkMode ? Color.rgb(147, 197, 253) : Color.rgb(102, 126, 234));
+        styleHeading(header, "heading-title");
 
-        Label infoLabel = new Label("Select a date to view your schedule.");
-        infoLabel.setFont(Font.font("Segoe UI", 14));
-        infoLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
+        Label info = new Label("Pick a day to explore its schedule, or generate a new plan.");
+        info.getStyleClass().add("body-label");
+        bindDarkModeClass(info);
 
-        // Fetch timetable dates
-        ActivityRepository repo = new ActivityRepository();
-        timetableDates = repo.getAllTimetableDates();
+    Node datesView = viewModel.getTimetableDates().isEmpty()
+        ? createEmptyState("No timetables yet. Generate one to begin!")
+        : createTimetableCalendar();
 
-        VBox gridBox = new VBox(10);
-        gridBox.setAlignment(Pos.CENTER);
-        if (timetableDates.isEmpty()) {
-            Label emptyLabel = new Label("No timetables found. Generate one first!");
-            emptyLabel.setTextFill(darkMode ? Color.rgb(203, 213, 225) : Color.rgb(45, 55, 72));
-            gridBox.getChildren().add(emptyLabel);
-        } else {
-            gridBox.getChildren().add(createCalendarGrid());
-        }
+    Node scrollableDates = wrapInScrollPane(datesView);
+    VBox.setVgrow(scrollableDates, Priority.ALWAYS);
 
-        Button backBtn = new Button("⬅ Back");
-        backBtn.setOnAction(e -> showLandingPanel());
-        backBtn.setStyle("-fx-background-color: #e2e8f0; -fx-font-size: 14; -fx-background-radius: 20;");
-
-        panel.getChildren().addAll(header, infoLabel, gridBox, backBtn);
-        root.setCenter(panel);
-        root.setLeft(null);
-        root.setRight(null);
+        content.getChildren().addAll(header, info, scrollableDates);
+        container.setCenter(content);
+        return container;
     }
 
-    // Generator panel for new timetable
-    private void showGeneratorPanel() {
-        BorderPane genRoot = new BorderPane();
-        // Dynamic styling based on dark mode
-        if (darkMode) {
-            genRoot.setStyle("-fx-background-color: rgba(30,32,48,0.97); -fx-background-radius: 18;");
-        } else {
-            genRoot.setStyle("-fx-background-color: rgba(255,255,255,0.97); -fx-background-radius: 18;");
-        }
+    private Node buildGeneratorPane() {
+        BorderPane container = new BorderPane();
+        container.setPadding(new Insets(48));
+        bindDarkModeClass(container);
 
-        // Left nav panel
-    VBox navPanel = new VBox(20);
-    navPanel.setPadding(new Insets(30, 10, 30, 30));
-    navPanel.setAlignment(Pos.TOP_LEFT);
-    // Dynamic nav panel styling
-    if (darkMode) {
-        navPanel.setStyle("-fx-background-color: #1e2030; -fx-background-radius: 16; -fx-border-width: 0 2 0 0; -fx-border-color: #3a3f5c;");
-    } else {
-        navPanel.setStyle("-fx-background-color: #f7fafc; -fx-background-radius: 16; -fx-border-width: 0 2 0 0; -fx-border-color: #cbd5e0;");
-    }
+    Button themeToggle = createThemeToggle();
+    BorderPane.setAlignment(themeToggle, Pos.TOP_RIGHT);
+    container.setTop(themeToggle);
 
-    Button sleepBtn = new Button("😴 Sleep");
-    Button workBtn = new Button("🏫 Work/School");
-    Button tasksBtn = new Button("📝 Tasks");
-    Button eventsBtn = new Button("🎉 Events");
-    Button generateBtn = new Button("🚀 Generate Timetable");
-    sleepBtn.setMaxWidth(Double.MAX_VALUE);
-    workBtn.setMaxWidth(Double.MAX_VALUE);
-    tasksBtn.setMaxWidth(Double.MAX_VALUE);
-    eventsBtn.setMaxWidth(Double.MAX_VALUE);
-    generateBtn.setMaxWidth(Double.MAX_VALUE);
-    
-    // Dynamic button styling
-    String navDefault = darkMode 
-        ? "-fx-background-color: #2d3250; -fx-text-fill: #cbd5e0; -fx-font-size: 16; -fx-background-radius: 12;" 
-        : "-fx-background-color: #e2e8f0; -fx-font-size: 16; -fx-background-radius: 12;";
-    String navSelected = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 16; -fx-background-radius: 12; -fx-font-weight: bold;";
-    sleepBtn.setStyle(navSelected);
-    workBtn.setStyle(navDefault);
-    tasksBtn.setStyle(navDefault);
-    eventsBtn.setStyle(navDefault);
-    generateBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 18; -fx-padding: 12 0;");
+        HBox layout = new HBox(32);
+        layout.setAlignment(Pos.TOP_LEFT);
 
-    navPanel.getChildren().addAll(sleepBtn, workBtn, tasksBtn, eventsBtn);
-    navPanel.getChildren().add(new Label("") ); // Spacer
-    navPanel.getChildren().add(generateBtn);
+        VBox nav = new VBox(16);
+        nav.setPrefWidth(220);
+        styleSurface(nav);
 
+        Button sleepBtn = createNavButton("😴 Sleep");
+        Button workBtn = createNavButton("🏫 Work/School");
+        Button tasksBtn = createNavButton("📝 Tasks");
+        Button eventsBtn = createNavButton("🎉 Events");
 
-        // Right content panel (category details)
-        StackPane contentPane = new StackPane();
+        StackPane contentStack = new StackPane();
+        contentStack.setPrefWidth(720);
 
-    // Sleep content (modernized UI with dark mode)
-    VBox sleepContent = createContentBox();
-    HBox sleepHeaderBox = createSectionHeader("😴", "Sleep Settings");
-    Label sleepLabel = new Label("Sleep Duration (hours):");
-    applyDarkModeTextColor(sleepLabel, false);
-    sleepDurationSpinner = new Spinner<>(1, 24, 8);
-    sleepDurationSpinner.setEditable(true);
-    sleepDurationSpinner.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #a0aec0; -fx-background-color: #fff; -fx-padding: 4 12; -fx-font-size: 16;");
-    Label sleepTip = new Label("Recommended: 7–9 hours per night");
-    sleepTip.setStyle(darkMode ? "-fx-font-size: 12; -fx-text-fill: #94a3b8;" : "-fx-font-size: 12; -fx-text-fill: #888;");
-    sleepContent.getChildren().addAll(sleepHeaderBox, sleepLabel, sleepDurationSpinner, sleepTip);
+        Node sleepView = buildSleepSection();
+        Node workView = buildWorkSection();
+        Node tasksView = buildTasksSection();
+        Node eventsView = buildEventsSection();
 
-    // Work/School content (modernized UI with dark mode)
-    // Modular WorkSection usage
-    String checkBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 15; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
-    java.util.List<CheckBox> workCheckBoxes = createDayCheckBoxes(checkBoxStyle);
-    monWorkBox = workCheckBoxes.get(0);
-    tueWorkBox = workCheckBoxes.get(1);
-    wedWorkBox = workCheckBoxes.get(2);
-    thuWorkBox = workCheckBoxes.get(3);
-    friWorkBox = workCheckBoxes.get(4);
-    satWorkBox = workCheckBoxes.get(5);
-    sunWorkBox = workCheckBoxes.get(6);
-    // Default Mon–Fri selected
-    monWorkBox.setSelected(true);
-    tueWorkBox.setSelected(true);
-    wedWorkBox.setSelected(true);
-    thuWorkBox.setSelected(true);
-    friWorkBox.setSelected(true);
-    workHourSpinner = new Spinner<>(0, 23, 9);
-    workMinuteBox = new ComboBox<>();
-    workMinuteBox.getItems().addAll("00", "30");
-    workMinuteBox.setValue("00");
-    workDurationSpinner = new Spinner<>(1, 12, 8);
-    VBox workContent = new WorkSection(workHourSpinner, workMinuteBox, workDurationSpinner, workCheckBoxes, darkMode).getContent();
+        contentStack.getChildren().addAll(sleepView, workView, tasksView, eventsView);
+        showContent(contentStack, sleepView);
+        selectNavButton(sleepBtn);
 
-        // Tasks content
-        // Modular TasksSection usage
-        String taskCheckBoxStyle = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 6 16; -fx-font-size: 15; -fx-border-color: #a0aec0; -fx-background-color: #fff;";
-        java.util.List<CheckBox> taskDayBoxes = createDayCheckBoxes(taskCheckBoxStyle);
-        TextField taskNameField = new TextField();
-        Spinner<Integer> taskDurationSpinner = new Spinner<>(1, 24, 1);
-        Button addTaskBtn = new Button("Add Task");
-        Label addTaskMsg = new Label("");
-        VBox taskListBox = new VBox(6);
-        // On panel show, always update task list display to reflect current persistent taskList
-        taskListBox.setPadding(new Insets(8, 0, 0, 0));
-        taskListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
-        CheckBox morningBox = new CheckBox();
-        CheckBox eveningBox = new CheckBox();
-        Runnable onClearTaskFields = () -> {
-            taskNameField.setText("");
-            taskDurationSpinner.getValueFactory().setValue(1);
-            for (CheckBox cb : taskDayBoxes) cb.setSelected(false);
-            morningBox.setSelected(false);
-            eveningBox.setSelected(false);
-            updateTaskListBox(taskListBox);
-        };
-        BiConsumer<com.example.TasksSection.TaskInput, Integer> onAddTask = (input, duration) -> {
-            if (input.days.isEmpty()) {
-                Task task = new Task(input.name, duration * 2, null, input.preferredTime);
-                taskList.add(task);
-            } else {
-                for (Integer dayIdx : input.days) {
-                    Task task = new Task(input.name, duration * 2, dayIdx, input.preferredTime);
-                    taskList.add(task);
-                }
-            }
-        };
-        updateTaskListBox(taskListBox);
-        VBox tasksContent = new TasksSection(
-            taskNameField, taskDurationSpinner, taskDayBoxes, addTaskBtn, addTaskMsg, taskListBox, darkMode,
-            onAddTask, onClearTaskFields, morningBox, eveningBox
-        ).getContent();
-
-
-        // Events content
-        // Modular EventsSection usage
-        TextField eventNameField = new TextField();
-        DatePicker eventDatePicker = new DatePicker();
-        Spinner<Integer> hourSpinner = new Spinner<>(0, 23, 18);
-        Spinner<Integer> minuteSpinner = new Spinner<>(0, 59, 0, 1);
-        Spinner<Integer> durationSpinner = new Spinner<>(1, 24, 1);
-        Button addEventBtn = new Button("Add Event");
-        Label addEventMsg = new Label("");
-        VBox eventListBox = new VBox(6);
-        eventListBox.setPadding(new Insets(8, 0, 0, 0));
-        eventListBox.setStyle("-fx-background-color: #fff; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #cbd5e0; -fx-border-width: 1;");
-        Runnable onClearEventFields = () -> {
-            eventNameField.setText("");
-            eventDatePicker.setValue(null);
-            hourSpinner.getValueFactory().setValue(18);
-            minuteSpinner.getValueFactory().setValue(0);
-            durationSpinner.getValueFactory().setValue(1);
-            updateEventListBox(eventListBox);
-        };
-        java.util.function.Consumer<com.example.EventsSection.EventData> onAddEvent = (data) -> {
-            int slot = data.hour * 2 + (data.minute >= 30 ? 1 : 0);
-            Event event = new Event(data.name, data.duration * 2, data.date, slot);
-            eventList.add(event);
-        };
-        updateEventListBox(eventListBox);
-        VBox eventsContent = new EventsSection(
-            eventNameField, eventDatePicker, hourSpinner, minuteSpinner, durationSpinner, addEventBtn, addEventMsg, eventListBox, darkMode,
-            onAddEvent, onClearEventFields
-        ).getContent();
-
-        // Show sleep by default
-        contentPane.getChildren().setAll(sleepContent);
-
-        // Button actions with highlight using helper method
         sleepBtn.setOnAction(e -> {
-            contentPane.getChildren().setAll(sleepContent);
-            updateNavButtonStyles(navDefault, navSelected, sleepBtn, workBtn, tasksBtn, eventsBtn);
+            showContent(contentStack, sleepView);
+            selectNavButton(sleepBtn, workBtn, tasksBtn, eventsBtn);
         });
         workBtn.setOnAction(e -> {
-            contentPane.getChildren().setAll(workContent);
-            updateNavButtonStyles(navDefault, navSelected, workBtn, sleepBtn, tasksBtn, eventsBtn);
+            showContent(contentStack, workView);
+            selectNavButton(workBtn, sleepBtn, tasksBtn, eventsBtn);
         });
         tasksBtn.setOnAction(e -> {
-            contentPane.getChildren().setAll(tasksContent);
-            updateNavButtonStyles(navDefault, navSelected, tasksBtn, sleepBtn, workBtn, eventsBtn);
+            showContent(contentStack, tasksView);
+            selectNavButton(tasksBtn, sleepBtn, workBtn, eventsBtn);
         });
         eventsBtn.setOnAction(e -> {
-            contentPane.getChildren().setAll(eventsContent);
-            updateNavButtonStyles(navDefault, navSelected, eventsBtn, sleepBtn, workBtn, tasksBtn);
+            showContent(contentStack, eventsView);
+            selectNavButton(eventsBtn, sleepBtn, workBtn, tasksBtn);
         });
 
-        // End date picker and output area (now in sidebar)
-        HBox endDateBox = new HBox(10);
-        endDateBox.setAlignment(Pos.CENTER_LEFT);
-        Label endDateLabel = new Label("End Date:");
+        generatorStatusLabel = new Label();
+        generatorStatusLabel.getStyleClass().add("status-label");
+        bindDarkModeClass(generatorStatusLabel);
+
         endDatePicker = new DatePicker();
-        endDateBox.getChildren().addAll(endDateLabel, endDatePicker);
+        bindDarkModeClass(endDatePicker);
 
-    outputArea = new TextArea();
-    outputArea.setEditable(false);
-    outputArea.setFocusTraversable(false);
-    outputArea.setPrefRowCount(2);
-    outputArea.setWrapText(true);
-    outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-background-radius: 8; -fx-background-color: #f7fafc; -fx-border-color: #cbd5e0; -fx-border-width: 1; -fx-text-fill: #2d3748; -fx-opacity: 1;");
+        Label endDateLabel = new Label("End Date");
+        endDateLabel.getStyleClass().add("body-label");
+        bindDarkModeClass(endDateLabel);
 
-        // Generate button
-        generateBtn.setOnAction(e -> {
-            if (endDatePicker.getValue() == null) {
-                outputArea.setText("❗ Please choose an end date before generating the timetable.");
-                return;
-            }
-            // Run generation in background
-            new Thread(() -> {
-                boolean success = generateSchedule();
-                javafx.application.Platform.runLater(() -> {
-                    if (success) {
-                        showCalendarPanel();
-                    } else {
-                        outputArea.setText("❌ Failed to generate timetable. Check your input.");
-                    }
-                });
-            }).start();
-        });
+        Button generateBtn = createPrimaryButton("🚀 Generate Timetable");
+        generateBtn.setOnAction(e -> handleGenerateTimetable());
 
-        // Back button
-        Button backBtn = new Button("⬅ Back");
-        backBtn.setOnAction(e -> showLandingPanel());
-        backBtn.setStyle("-fx-background-color: #e2e8f0; -fx-font-size: 14; -fx-background-radius: 20;");
+    Button landingBackBtn = createSecondaryButton("⬅ Back");
+    landingBackBtn.setOnAction(e -> showLandingView());
 
-        // Add end date, generate, output, and back to the bottom of the sidebar
-        VBox navBottom = new VBox(14, endDateBox, generateBtn, outputArea, backBtn);
-        navBottom.setAlignment(Pos.BOTTOM_LEFT);
-        navBottom.setPadding(new Insets(30, 10, 30, 10));
+    VBox bottomSection = new VBox(12, endDateLabel, endDatePicker, generateBtn, generatorStatusLabel, landingBackBtn);
+        bottomSection.setAlignment(Pos.BOTTOM_LEFT);
+        bottomSection.getChildren().forEach(this::bindDarkModeClass);
 
-        // Remove previous navPanel children after generateBtn, then add navBottom
-        navPanel.getChildren().remove(navPanel.getChildren().size() - 1); // remove old spacer
-        navPanel.getChildren().remove(generateBtn); // remove from previous location if present
-        navPanel.getChildren().add(navBottom);
+    Region navSpacer = new Region();
+    VBox.setVgrow(navSpacer, Priority.ALWAYS);
+    nav.getChildren().addAll(sleepBtn, workBtn, tasksBtn, eventsBtn, navSpacer, bottomSection);
 
-        VBox rightPanel = new VBox(10, contentPane);
-        rightPanel.setAlignment(Pos.TOP_CENTER);
-        rightPanel.setPadding(new Insets(0, 0, 0, 0));
-
-        genRoot.setLeft(navPanel);
-        genRoot.setCenter(rightPanel);
-        root.setCenter(genRoot);
-        root.setLeft(null);
-        root.setRight(null);
+        layout.getChildren().addAll(nav, contentStack);
+        container.setCenter(layout);
+        return container;
     }
 
-    // Generator panel input UI
+    private Node buildDayPane(String date) {
+        viewModel.selectedDateProperty().set(date);
 
+        BorderPane container = new BorderPane();
+        container.setPadding(new Insets(48));
+        bindDarkModeClass(container);
 
-    // Create a visually styled calendar grid for timetable dates
-    private GridPane createCalendarGrid() {
-        // Only show timetable dates from today onward
-        java.time.LocalDate today = java.time.LocalDate.now();
-        // Filter timetableDates to only those >= today
-        java.util.List<String> futureDates = timetableDates.stream()
-            .filter(d -> !java.time.LocalDate.parse(d).isBefore(today))
-            .toList();
-        if (futureDates.isEmpty()) {
-            GridPane grid = new GridPane();
-            grid.add(new Label("No future timetables found."), 0, 0);
-            return grid;
-        }
-        java.time.LocalDate minDate = java.time.LocalDate.parse(futureDates.get(0));
-        java.time.LocalDate maxDate = java.time.LocalDate.parse(futureDates.get(futureDates.size()-1));
-        java.time.LocalDate firstOfMonth = minDate.withDayOfMonth(1);
-        java.time.LocalDate lastOfMonth = maxDate.withDayOfMonth(maxDate.lengthOfMonth());
+    Button themeToggle = createThemeToggle();
+    Button backToCalendarBtn = createSecondaryButton("⬅ Back to Calendar");
+    backToCalendarBtn.setOnAction(e -> showCalendarView());
 
-        GridPane grid = new GridPane();
-        grid.setHgap(8);
-        grid.setVgap(8);
-        grid.setAlignment(Pos.CENTER);
+    Region dayTopSpacer = new Region();
+    HBox topBar = new HBox(16, backToCalendarBtn, dayTopSpacer, themeToggle);
+    topBar.setAlignment(Pos.CENTER_LEFT);
+    HBox.setHgrow(dayTopSpacer, Priority.ALWAYS);
+    bindDarkModeClass(topBar);
+    BorderPane.setMargin(topBar, new Insets(0, 0, 24, 0));
+    container.setTop(topBar);
 
-        String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-        for (int i = 0; i < 7; i++) {
-            Label dayLabel = new Label(days[i]);
-            dayLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-            dayLabel.setTextFill(Color.rgb(102, 126, 234));
-            grid.add(dayLabel, i, 0);
-        }
+        VBox content = new VBox(24);
+        content.setAlignment(Pos.TOP_CENTER);
+        styleSurface(content);
 
-        // Fill calendar
-        java.time.LocalDate date = firstOfMonth;
-        int row = 1;
-        int col = (date.getDayOfWeek().getValue() + 6) % 7; // Monday=0
-        while (!date.isAfter(lastOfMonth)) {
-            String dateStr = date.toString();
-            if (!java.time.LocalDate.parse(dateStr).isBefore(today)) {
-                Button dayBtn = new Button(String.valueOf(date.getDayOfMonth()));
-                dayBtn.setMinSize(40, 40);
-                dayBtn.setMaxSize(40, 40);
-                if (futureDates.contains(dateStr)) {
-                    dayBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-border-color: #764ba2; -fx-border-width: 2;");
-                    dayBtn.setOnAction(e -> showTimetableDayPanel(dateStr));
-                } else {
-                    dayBtn.setDisable(true);
-                    dayBtn.setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #aaa; -fx-background-radius: 20;");
-                }
-                grid.add(dayBtn, col, row);
-            }
-            col++;
-            if (col > 6) {
-                col = 0;
-                row++;
-            }
-            date = date.plusDays(1);
-        }
-        return grid;
-}
+        LocalDate localDate = LocalDate.parse(date);
+        String headingText = localDate.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.getDefault())
+                + ", "
+                + localDate.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault())
+                + " " + localDate.getDayOfMonth() + ", " + localDate.getYear();
 
-    // Show timetable for a specific day in a new panel
-    private void showTimetableDayPanel(String dateStr) {
-        StackPane bgPane = new StackPane();
-        bgPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #f8fafc 0%, #e9d8fd 100%);");
+        Label header = new Label(headingText);
+        styleHeading(header, "heading-title");
 
-    VBox centerBox = new VBox(30);
-    centerBox.setAlignment(Pos.CENTER);
-    centerBox.setPadding(new Insets(30));
+    TimetableDayView timetableDayView = new TimetableDayView(viewModel.getTimetableEntries());
+    timetableDayView.bindDarkMode(viewModel.darkModeProperty());
+    Node dayScroll = wrapInScrollPane(timetableDayView);
+    VBox.setVgrow(dayScroll, Priority.ALWAYS);
 
-    // Back to Calendar button
-    Button backBtn = new Button("⬅ Back to Calendar");
-    backBtn.setStyle("-fx-background-color: #e2e8f0; -fx-font-size: 14; -fx-background-radius: 20;");
-    backBtn.setOnAction(e -> showCalendarPanel());
-
-
-        java.time.LocalDate dateObj = java.time.LocalDate.parse(dateStr);
-        String dayOfWeek = dateObj.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault());
-        String dateDisplay = dayOfWeek + ", " + dateObj.getMonth().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()) + " " + dateObj.getDayOfMonth() + ", " + dateObj.getYear();
-        Label dateHeader = new Label(dateDisplay);
-        dateHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 32));
-        dateHeader.setTextFill(Color.rgb(102, 126, 234));
-        dateHeader.setStyle("-fx-effect: dropshadow(gaussian, #b794f4, 8, 0.2, 0, 2);");
-
-        // Card for timetable with vertical progress bar
-        HBox cardRow = new HBox(0);
-        cardRow.setAlignment(Pos.CENTER);
-
-        // --- Vertical progress bar as border ---
-        ActivityRepository repo = new ActivityRepository();
-        java.util.List<ActivityRepository.TimetableEntry> entries = repo.getTimetableForDate(dateStr);
-        boolean isToday = dateStr.equals(java.time.LocalDate.now().toString());
-        VBox progressBarVBox = new VBox();
-        progressBarVBox.setPrefWidth(18);
-        progressBarVBox.setMinWidth(18);
-        progressBarVBox.setMaxWidth(18);
-        progressBarVBox.setPrefHeight(340);
-        progressBarVBox.setStyle("-fx-background-color: #e2e8f0; -fx-background-radius: 8;");
-        if (isToday && !entries.isEmpty()) {
-            int totalSlots = 48;
-            java.time.LocalTime now = java.time.LocalTime.now();
-            int currentSlot = now.getHour() * 2 + (now.getMinute() >= 30 ? 1 : 0);
-            double progress = (currentSlot + 1) / (double) totalSlots;
-            Region fill = new Region();
-            fill.setPrefWidth(18);
-            fill.setMinWidth(18);
-            fill.setMaxWidth(18);
-            fill.setPrefHeight(progressBarVBox.getPrefHeight() * progress);
-            fill.setStyle("-fx-background-color: linear-gradient(to bottom, #667eea 0%, #48bb78 100%); -fx-background-radius: 8 8 8 8;");
-            progressBarVBox.getChildren().add(fill);
-        }
-        // --- End vertical progress bar ---
-
-        VBox card = new VBox(18);
-        card.setAlignment(Pos.TOP_CENTER);
-        card.setPadding(new Insets(30, 30, 30, 30));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 24; -fx-effect: dropshadow(gaussian, #a0aec0, 16, 0.2, 0, 4);");
-
-        VBox timetableBox = new VBox(10);
-        timetableBox.setAlignment(Pos.TOP_CENTER);
-        if (entries.isEmpty()) {
-            timetableBox.getChildren().add(new Label("❌ No timetable found for " + dateStr));
-        } else {
-            int n = entries.size();
-            int i = 0;
-            java.time.LocalTime now = java.time.LocalTime.now();
-            int currentSlot = isToday ? (now.getHour() * 2 + (now.getMinute() >= 30 ? 1 : 0)) : -1;
-            int highlightIdx = -1, nextIdx = -1;
-            int[] groupStart = new int[n];
-            int[] groupEnd = new int[n];
-            String[] groupActivity = new String[n];
-            int groupCount = 0;
-            double rowHeight = 38;
-            while (i < n) {
-                String activity = entries.get(i).activityName;
-                int startSlot = entries.get(i).slot;
-                int j = i + 1;
-                while (j < n && entries.get(j).activityName.equals(activity) && entries.get(j).slot == entries.get(j-1).slot + 1) {
-                    j++;
-                }
-                int endSlot = entries.get(j-1).slot;
-                groupStart[groupCount] = startSlot;
-                groupEnd[groupCount] = endSlot;
-                groupActivity[groupCount] = activity;
-                if (isToday && currentSlot >= startSlot && currentSlot <= endSlot) highlightIdx = groupCount;
-                if (isToday && nextIdx == -1 && currentSlot < startSlot) nextIdx = groupCount;
-                groupCount++;
-                i = j;
-            }
-            for (int g = 0; g < groupCount; g++) {
-                int startSlot = groupStart[g];
-                int endSlot = groupEnd[g];
-                String activity = groupActivity[g];
-                int startHour = startSlot / 2;
-                int startMin = (startSlot % 2) * 30;
-                int endHour = (endSlot + 1) / 2;
-                int endMin = ((endSlot + 1) % 2) * 30;
-                String timeStr = String.format("%02d:%02d - %02d:%02d", startHour, startMin, endHour, endMin);
-                HBox row = new HBox(10);
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setPrefHeight(rowHeight);
-                // Highlight current task row with a strong background and connect to progress bar
-                if (isToday && g == highlightIdx) {
-                    row.setStyle("-fx-background-color: linear-gradient(to right, #c6f6d5 0%, #e6fffa 100%); -fx-background-radius: 12; -fx-border-color: #48bb78; -fx-border-width: 0 0 0 6; -fx-border-radius: 12 0 0 12;");
-                } else {
-                    row.setStyle("");
-                }
-                Label timeLabel = new Label(timeStr);
-                timeLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-                Label actLabel = new Label(activity);
-                actLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-                actLabel.setPadding(new Insets(6, 18, 6, 18));
-                actLabel.setStyle("-fx-background-radius: 20; -fx-font-size: 15;");
-                if (isToday && g == highlightIdx) {
-                    actLabel.setStyle(actLabel.getStyle() + "-fx-background-color: #48bb78; -fx-text-fill: white; border: 2px solid #22543d;");
-                } else if (isToday && g == nextIdx) {
-                    actLabel.setStyle(actLabel.getStyle() + "-fx-background-color: #b2f5ea; -fx-text-fill: #22543d; border: 2px solid #81e6d9;");
-                } else {
-                    actLabel.setStyle(actLabel.getStyle() + "-fx-background-color: #e2e8f0; -fx-text-fill: #2d3748; border: 2px solid #cbd5e0;");
-                }
-                row.getChildren().addAll(new Label("⏰"), timeLabel, actLabel);
-                timetableBox.getChildren().add(row);
-            }
-        }
-
-    card.getChildren().addAll(dateHeader, timetableBox);
-        cardRow.getChildren().addAll(progressBarVBox, card);
-    centerBox.getChildren().addAll(cardRow, backBtn);
-        bgPane.getChildren().add(centerBox);
-        root.setCenter(bgPane);
+        content.getChildren().addAll(header, dayScroll);
+        container.setCenter(content);
+        return container;
     }
 
+    // ------------------------------------------------------------------
+    // Section builders
+    // ------------------------------------------------------------------
 
-    /**
-     * Returns true if generation and save succeeded, false otherwise.
-     */
-    private boolean generateSchedule() {
-        // Delete all existing timetable entries before generating a new one
-        ActivityRepository repo = new ActivityRepository();
-        repo.deleteTimetableForDateRange("0000-01-01", "9999-12-31");
+    private Node buildSleepSection() {
+        VBox box = new VBox(18);
+        styleSurface(box);
 
-        // Collect user input
-        int sleepHours = sleepDurationSpinner.getValue();
-    // Build workdaysText from checkboxes (Mon=1, ..., Sun=7)
-    StringBuilder workdaysTextBuilder = new StringBuilder();
-    if (monWorkBox.isSelected()) workdaysTextBuilder.append("1,");
-    if (tueWorkBox.isSelected()) workdaysTextBuilder.append("2,");
-    if (wedWorkBox.isSelected()) workdaysTextBuilder.append("3,");
-    if (thuWorkBox.isSelected()) workdaysTextBuilder.append("4,");
-    if (friWorkBox.isSelected()) workdaysTextBuilder.append("5,");
-    if (satWorkBox.isSelected()) workdaysTextBuilder.append("6,");
-    if (sunWorkBox.isSelected()) workdaysTextBuilder.append("7,");
-    String workdaysText = workdaysTextBuilder.length() > 0 ? workdaysTextBuilder.substring(0, workdaysTextBuilder.length()-1) : "";
-        int workHour = workHourSpinner.getValue();
-        String workMinute = workMinuteBox.getValue();
-        int workStartSlot = workHour * 2 + ("30".equals(workMinute) ? 1 : 0);
-        int workDuration = workDurationSpinner.getValue();
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.time.LocalDate end = endDatePicker.getValue();
-        if (end == null || today.isAfter(end)) return false;
+        Label header = new Label("😴 Sleep Settings");
+        styleHeading(header, "heading-title");
 
-        // Parse workdays
-        java.util.List<Integer> workdays = new java.util.ArrayList<>();
-        for (String s : workdaysText.split(",")) {
-            try { workdays.add(Integer.parseInt(s.trim()) - 1); } catch (Exception ex) {}
+        Label prompt = new Label("How many hours of sleep do you want each night?");
+        prompt.getStyleClass().add("body-label");
+        bindDarkModeClass(prompt);
+
+        sleepDurationSpinner = new Spinner<>(4, 12, 8);
+        sleepDurationSpinner.setEditable(true);
+        bindDarkModeClass(sleepDurationSpinner);
+
+        box.getChildren().addAll(header, prompt, sleepDurationSpinner);
+        return box;
+    }
+
+    private Node buildWorkSection() {
+        VBox box = new VBox(18);
+        styleSurface(box);
+
+        Label header = new Label("🏫 Work & School");
+        styleHeading(header, "heading-title");
+
+        Label daysLabel = new Label("Select your work or school days:");
+        daysLabel.getStyleClass().add("body-label");
+        bindDarkModeClass(daysLabel);
+
+        workdayBoxes = createDayCheckboxArray();
+        FlowPane daysPane = new FlowPane(12, 12);
+        daysPane.setAlignment(Pos.CENTER_LEFT);
+        for (int i = 0; i < workdayBoxes.length; i++) {
+            if (i < 5) {
+                workdayBoxes[i].setSelected(true);
+            }
+            bindDarkModeClass(workdayBoxes[i]);
+            daysPane.getChildren().add(workdayBoxes[i]);
         }
+        bindDarkModeClass(daysPane);
 
-        // Use taskList field directly
-        java.util.List<Task> tasks = new java.util.ArrayList<>(taskList);
-        // Use eventList field directly
-        java.util.List<Event> events = new java.util.ArrayList<>(eventList);
+        workHourSpinner = new Spinner<>(0, 23, 9);
+        workHourSpinner.setEditable(true);
+        bindDarkModeClass(workHourSpinner);
 
-        // Call backend SchedulerService to generate timetable
-        SchedulerService scheduler = new SchedulerService();
-        ScheduleResult result = scheduler.generateTimetable(
-            workdays, workStartSlot, workDuration * 2, sleepHours * 2, tasks, events, today, end
+        workMinuteBox = new ComboBox<>();
+        workMinuteBox.getItems().addAll("00", "30");
+        workMinuteBox.setValue("00");
+        bindDarkModeClass(workMinuteBox);
+
+        HBox startTimeBox = new HBox(8, workHourSpinner, new Label(":"), workMinuteBox);
+        startTimeBox.setAlignment(Pos.CENTER_LEFT);
+        bindDarkModeClass(startTimeBox);
+
+        workDurationSpinner = new Spinner<>(1, 12, 8);
+        workDurationSpinner.setEditable(true);
+        bindDarkModeClass(workDurationSpinner);
+
+        box.getChildren().addAll(
+                header,
+                daysLabel,
+                daysPane,
+                new Label("Start time:"),
+                startTimeBox,
+                new Label("Duration (hours):"),
+                workDurationSpinner
         );
 
-        // Save timetable to backend for chosen date range
-        java.util.List<Activity> allActs = new java.util.ArrayList<>();
-    allActs.add(new FixedActivity("Sleep", sleepHours * 2));
-    allActs.add(new FixedActivity("Work", workDuration * 2));
-        allActs.addAll(tasks);
-        allActs.addAll(events);
-        for (Activity act : allActs) repo.addActivity(act);
-        java.util.Map<String, Integer> nameToId = repo.getActivityNameToIdMap();
-    repo.saveTimetable(result.getTimetable(), today, end, nameToId);
-        // UI update is done on JavaFX thread
-        return true;
+        box.getChildren().stream()
+                .filter(node -> node instanceof Label)
+                .forEach(this::bindDarkModeClass);
+        return box;
+    }
+
+    private Node buildTasksSection() {
+        VBox box = new VBox(18);
+        styleSurface(box);
+
+        Label header = new Label("📝 Tasks");
+        styleHeading(header, "heading-title");
+
+        taskNameField = new TextField();
+        taskNameField.setPromptText("Task name");
+        bindDarkModeClass(taskNameField);
+
+        taskHourSpinner = new Spinner<>(0, 12, 0);
+        taskHourSpinner.setEditable(true);
+        bindDarkModeClass(taskHourSpinner);
+
+        taskMinuteBox = new ComboBox<>();
+        taskMinuteBox.getItems().addAll("00", "30");
+        taskMinuteBox.setValue("30");
+        bindDarkModeClass(taskMinuteBox);
+
+        HBox durationBox = new HBox(8,
+                new Label("Hour:"), taskHourSpinner,
+                new Label("Minute:"), taskMinuteBox);
+        durationBox.setAlignment(Pos.CENTER_LEFT);
+        bindDarkModeClass(durationBox);
+
+        taskDayBoxes = createDayCheckboxArray();
+        FlowPane daysPane = new FlowPane(12, 12);
+        daysPane.setAlignment(Pos.CENTER_LEFT);
+        for (CheckBox cb : taskDayBoxes) {
+            bindDarkModeClass(cb);
+            daysPane.getChildren().add(cb);
+        }
+        bindDarkModeClass(daysPane);
+
+        taskTimeGroup = new ToggleGroup();
+        RadioButton any = createTimeToggle("Any", "any");
+        RadioButton morning = createTimeToggle("Morning", "morning");
+        RadioButton evening = createTimeToggle("Evening", "evening");
+        any.setSelected(true);
+
+        HBox preferredTimeBox = new HBox(12, any, morning, evening);
+        preferredTimeBox.setAlignment(Pos.CENTER_LEFT);
+        bindDarkModeClass(preferredTimeBox);
+
+    Button addTaskBtn = createPrimaryButton("Add Task");
+    addTaskBtn.setOnAction(e -> handleAddTask());
+
+        taskStatusLabel = new Label();
+        taskStatusLabel.getStyleClass().add("status-label");
+        bindDarkModeClass(taskStatusLabel);
+
+        taskListView = createTaskListView();
+        taskListView.setPrefHeight(220);
+
+    box.getChildren().addAll(
+        header,
+        new Label("Task name"),
+        taskNameField,
+        new Label("Duration"),
+        durationBox,
+        new Label("Preferred days (optional)"),
+        daysPane,
+        new Label("Preferred time"),
+        preferredTimeBox,
+        addTaskBtn,
+        taskStatusLabel,
+        taskListView
+    );
+
+        box.getChildren().stream()
+                .filter(node -> node instanceof Label)
+                .forEach(this::bindDarkModeClass);
+        return box;
+    }
+
+    private Node buildEventsSection() {
+        VBox box = new VBox(18);
+        styleSurface(box);
+
+        Label header = new Label("🎉 Events");
+        styleHeading(header, "heading-title");
+
+        eventNameField = new TextField();
+        eventNameField.setPromptText("Event name");
+        bindDarkModeClass(eventNameField);
+
+        eventDatePicker = new DatePicker();
+        bindDarkModeClass(eventDatePicker);
+
+        eventHourSpinner = new Spinner<>(0, 23, 18);
+        eventHourSpinner.setEditable(true);
+        bindDarkModeClass(eventHourSpinner);
+
+        eventMinuteBox = new ComboBox<>();
+        eventMinuteBox.getItems().addAll("00", "30");
+        eventMinuteBox.setValue("00");
+        bindDarkModeClass(eventMinuteBox);
+
+        HBox startTimeBox = new HBox(8, eventHourSpinner, new Label(":"), eventMinuteBox);
+        startTimeBox.setAlignment(Pos.CENTER_LEFT);
+        bindDarkModeClass(startTimeBox);
+
+        eventDurationSpinner = new Spinner<>(1, 12, 1);
+        eventDurationSpinner.setEditable(true);
+        bindDarkModeClass(eventDurationSpinner);
+
+        Button addEventBtn = createPrimaryButton("Add Event");
+        addEventBtn.setOnAction(e -> handleAddEvent());
+
+        eventStatusLabel = new Label();
+        eventStatusLabel.getStyleClass().add("status-label");
+        bindDarkModeClass(eventStatusLabel);
+
+        eventListView = createEventListView();
+        eventListView.setPrefHeight(220);
+
+        box.getChildren().addAll(
+                header,
+                new Label("Event name"),
+                eventNameField,
+                new Label("Event date"),
+                eventDatePicker,
+                new Label("Start time"),
+                startTimeBox,
+                new Label("Duration (hours)"),
+                eventDurationSpinner,
+                addEventBtn,
+                eventStatusLabel,
+                eventListView
+        );
+
+        box.getChildren().stream()
+                .filter(node -> node instanceof Label)
+                .forEach(this::bindDarkModeClass);
+        return box;
+    }
+
+    // ------------------------------------------------------------------
+    // Actions
+    // ------------------------------------------------------------------
+
+    private void handleAddTask() {
+        String name = taskNameField.getText() == null ? "" : taskNameField.getText().trim();
+        if (name.isEmpty()) {
+            taskStatusLabel.setText("Please enter a task name.");
+            return;
+        }
+
+        int durationHours = taskHourSpinner.getValue();
+        int durationMinutes = Integer.parseInt(taskMinuteBox.getValue());
+        int durationSlots = durationHours * 2 + (durationMinutes == 30 ? 1 : 0);
+        if (durationSlots == 0) {
+            durationSlots = 1; // enforce minimum 30 minutes
+        }
+
+        List<Integer> selectedDays = new ArrayList<>();
+        for (int i = 0; i < taskDayBoxes.length; i++) {
+            if (taskDayBoxes[i].isSelected()) {
+                selectedDays.add(i);
+            }
+        }
+
+        Toggle selectedToggle = taskTimeGroup.getSelectedToggle();
+        String preferredTime = selectedToggle != null
+                ? Objects.toString(selectedToggle.getUserData(), "any")
+                : "any";
+
+        if (selectedDays.isEmpty()) {
+            viewModel.getTasks().add(new Task(name, durationSlots, null, preferredTime));
+        } else {
+            for (Integer day : selectedDays) {
+                viewModel.getTasks().add(new Task(name, durationSlots, day, preferredTime));
+            }
+        }
+
+        taskStatusLabel.setText("✅ Task added");
+        taskNameField.clear();
+        taskHourSpinner.getValueFactory().setValue(0);
+        taskMinuteBox.setValue("30");
+        for (CheckBox cb : taskDayBoxes) {
+            cb.setSelected(false);
+        }
+        taskTimeGroup.getToggles().forEach(toggle -> {
+            if ("any".equals(toggle.getUserData())) {
+                toggle.setSelected(true);
+            }
+        });
+    }
+
+    private void handleAddEvent() {
+        String name = eventNameField.getText() == null ? "" : eventNameField.getText().trim();
+        LocalDate date = eventDatePicker.getValue();
+        if (name.isEmpty() || date == null) {
+            eventStatusLabel.setText("Please provide an event name and date.");
+            return;
+        }
+
+        int hour = eventHourSpinner.getValue();
+        String minute = eventMinuteBox.getValue();
+        int slot = hour * 2 + ("30".equals(minute) ? 1 : 0);
+        int durationSlots = eventDurationSpinner.getValue() * 2;
+
+        viewModel.getEvents().add(new Event(name, durationSlots, date, slot));
+        eventStatusLabel.setText("🎉 Event added");
+
+        eventNameField.clear();
+        eventDatePicker.setValue(null);
+        eventHourSpinner.getValueFactory().setValue(18);
+        eventMinuteBox.setValue("00");
+        eventDurationSpinner.getValueFactory().setValue(1);
+    }
+
+    private void handleGenerateTimetable() {
+        generatorStatusLabel.setText("Generating timetable...");
+
+        LocalDate today = LocalDate.now();
+        LocalDate end = endDatePicker.getValue();
+        if (end == null || end.isBefore(today)) {
+            generatorStatusLabel.setText("Please choose an end date after today.");
+            return;
+        }
+
+        List<Integer> workdays = new ArrayList<>();
+        for (int i = 0; i < workdayBoxes.length; i++) {
+            if (workdayBoxes[i].isSelected()) {
+                workdays.add(i);
+            }
+        }
+
+        int workStartSlot = workHourSpinner.getValue() * 2
+                + ("30".equals(workMinuteBox.getValue()) ? 1 : 0);
+        int workDurationSlots = workDurationSpinner.getValue() * 2;
+        int sleepDurationSlots = sleepDurationSpinner.getValue() * 2;
+
+        new Thread(() -> {
+            boolean success = viewModel.generateAndPersistSchedule(
+                    workdays,
+                    workStartSlot,
+                    workDurationSlots,
+                    sleepDurationSlots,
+                    today,
+                    end
+            );
+
+            Platform.runLater(() -> {
+                if (success) {
+                    generatorStatusLabel.setText("✅ Timetable created!");
+                    viewModel.resetComposerState();
+                    taskStatusLabel.setText("");
+                    eventStatusLabel.setText("");
+                    showCalendarView();
+                } else {
+                    generatorStatusLabel.setText("❌ Could not generate timetable. Check your inputs.");
+                }
+            });
+        }, "scheduler-generator").start();
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    private Button createPrimaryButton(String text) {
+        Button button = new Button(text);
+        button.getStyleClass().add("primary-button");
+        bindDarkModeClass(button);
+        return button;
+    }
+
+    private Button createSecondaryButton(String text) {
+        Button button = new Button(text);
+        button.getStyleClass().add("secondary-button");
+        bindDarkModeClass(button);
+        return button;
+    }
+
+    private Button createNavButton(String text) {
+        Button button = new Button(text);
+        button.getStyleClass().add("nav-button");
+        button.setMaxWidth(Double.MAX_VALUE);
+        bindDarkModeClass(button);
+        return button;
+    }
+
+    private Button createThemeToggle() {
+        Button toggle = new Button();
+        toggle.getStyleClass().add("theme-toggle");
+        toggle.textProperty().bind(Bindings.when(viewModel.darkModeProperty())
+                .then("☀️")
+                .otherwise("🌙"));
+        toggle.setOnAction(e -> viewModel.toggleDarkMode());
+        bindDarkModeClass(toggle);
+        return toggle;
+    }
+
+    private void selectNavButton(Button selected, Button... others) {
+        for (Button other : others) {
+            other.getStyleClass().remove("nav-button--selected");
+        }
+        if (!selected.getStyleClass().contains("nav-button--selected")) {
+            selected.getStyleClass().add("nav-button--selected");
+        }
+    }
+
+    private void showContent(StackPane container, Node content) {
+        if (!container.getChildren().contains(content)) {
+            container.getChildren().add(content);
+        }
+        content.toFront();
+    }
+
+    private Node createTimetableCalendar() {
+        ObservableList<String> rawDates = viewModel.getTimetableDates();
+        if (rawDates.isEmpty()) {
+            return createEmptyState("No timetables yet.");
+        }
+
+        List<LocalDate> sortedDates = rawDates.stream()
+                .map(LocalDate::parse)
+                .distinct()
+                .sorted()
+                .toList();
+
+        LocalDate firstDate = sortedDates.get(0);
+        LocalDate lastDate = sortedDates.get(sortedDates.size() - 1);
+        LocalDate calendarStart = firstDate.with(DayOfWeek.MONDAY);
+        LocalDate calendarEnd = lastDate.with(DayOfWeek.SUNDAY);
+        Set<LocalDate> activeDates = new LinkedHashSet<>(sortedDates);
+
+        GridPane grid = new GridPane();
+        grid.getStyleClass().add("timetable-grid");
+        bindDarkModeClass(grid);
+        grid.setHgap(16);
+        grid.setVgap(16);
+        grid.setMaxWidth(Double.MAX_VALUE);
+
+        for (int i = 0; i < 7; i++) {
+            ColumnConstraints column = new ColumnConstraints();
+            column.setPercentWidth(100d / 7d);
+            grid.getColumnConstraints().add(column);
+
+            DayOfWeek dayOfWeek = DayOfWeek.MONDAY.plus(i);
+            Label header = new Label(dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()));
+            header.getStyleClass().add("calendar-header");
+            bindDarkModeClass(header);
+            GridPane.setConstraints(header, i, 0);
+            GridPane.setFillWidth(header, true);
+            grid.getChildren().add(header);
+        }
+
+        int totalDays = (int) ChronoUnit.DAYS.between(calendarStart, calendarEnd) + 1;
+        for (int offset = 0; offset < totalDays; offset++) {
+            LocalDate date = calendarStart.plusDays(offset);
+            int column = offset % 7;
+            int row = offset / 7 + 1;
+
+            StackPane cell = new StackPane();
+            cell.getStyleClass().add("calendar-cell");
+            bindDarkModeClass(cell);
+
+            boolean isActive = activeDates.contains(date);
+            if (isActive) {
+                cell.getStyleClass().add("calendar-cell--active");
+            } else if (date.isBefore(firstDate) || date.isAfter(lastDate)) {
+                cell.getStyleClass().add("calendar-cell--outside");
+            } else {
+                cell.getStyleClass().add("calendar-cell--idle");
+            }
+
+            VBox content = new VBox(6);
+            content.getStyleClass().add("calendar-cell__content");
+            content.setAlignment(Pos.TOP_LEFT);
+            bindDarkModeClass(content);
+
+            if (date.getDayOfMonth() == 1) {
+                Label month = new Label(date.getMonth().getDisplayName(TextStyle.SHORT, Locale.getDefault()).toUpperCase());
+                month.getStyleClass().add("calendar-day-month");
+                bindDarkModeClass(month);
+                content.getChildren().add(month);
+            }
+
+            Label dayNumber = new Label(String.valueOf(date.getDayOfMonth()));
+            dayNumber.getStyleClass().add("calendar-day-num");
+            bindDarkModeClass(dayNumber);
+            content.getChildren().add(dayNumber);
+
+            Label hint = new Label(isActive ? "View timetable" : "No entries");
+            hint.getStyleClass().add("calendar-day-hint");
+            bindDarkModeClass(hint);
+            content.getChildren().add(hint);
+
+            cell.getChildren().add(content);
+            GridPane.setConstraints(cell, column, row);
+            GridPane.setFillWidth(cell, true);
+            GridPane.setVgrow(cell, Priority.ALWAYS);
+
+            if (isActive) {
+                cell.setOnMouseClicked(e -> showDayView(date.toString()));
+                cell.setCursor(Cursor.HAND);
+            }
+
+            grid.getChildren().add(cell);
+        }
+
+        return grid;
+    }
+
+    private Node wrapInScrollPane(Node node) {
+        ScrollPane scrollPane = new ScrollPane(node);
+        scrollPane.getStyleClass().add("frost-scroll");
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setMaxWidth(Double.MAX_VALUE);
+        bindDarkModeClass(scrollPane);
+        if (node instanceof Region region) {
+            region.setMaxWidth(Double.MAX_VALUE);
+        }
+        return scrollPane;
+    }
+
+    private Node createEmptyState(String message) {
+        Label label = new Label(message);
+        label.getStyleClass().add("body-label");
+        bindDarkModeClass(label);
+        return label;
+    }
+
+    private CheckBox[] createDayCheckboxArray() {
+        String[] labels = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        CheckBox[] boxes = new CheckBox[labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            CheckBox cb = new CheckBox(labels[i]);
+            cb.getStyleClass().add("chip");
+            boxes[i] = cb;
+        }
+        return boxes;
+    }
+
+    private RadioButton createTimeToggle(String label, String value) {
+        RadioButton button = new RadioButton(label);
+        button.setUserData(value);
+        button.setToggleGroup(taskTimeGroup);
+        bindDarkModeClass(button);
+        return button;
+    }
+
+    private ListView<Task> createTaskListView() {
+        ListView<Task> listView = new ListView<>(viewModel.getTasks());
+        listView.setPlaceholder(createEmptyState("No tasks yet."));
+        bindDarkModeClass(listView);
+        listView.setCellFactory(lv -> new ListCell<>() {
+            private final Label title = new Label();
+            private final Button removeButton = createSecondaryButton("Remove");
+            private final HBox container = new HBox(12, title, removeButton);
+
+            {
+                container.setAlignment(Pos.CENTER_LEFT);
+                bindDarkModeClass(container);
+                bindDarkModeClass(title);
+            }
+
+            @Override
+            protected void updateItem(Task item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    int slots = Math.max(1, item.getDurationInSlots());
+                    int totalMinutes = slots * 30;
+                    int baseMinutes = 30;
+                    int endTotalMinutes = baseMinutes + totalMinutes;
+                    String startLabel = "00:30";
+                    String endLabel = String.format("%02d:%02d", endTotalMinutes / 60, endTotalMinutes % 60);
+                    title.setText(item.getName() + "  (" + startLabel + " - " + endLabel + ")");
+                    removeButton.setOnAction(e -> viewModel.getTasks().remove(item));
+                    setGraphic(container);
+                }
+            }
+        });
+        return listView;
+    }
+
+    private ListView<Event> createEventListView() {
+        ListView<Event> listView = new ListView<>(viewModel.getEvents());
+        listView.setPlaceholder(createEmptyState("No events yet."));
+        bindDarkModeClass(listView);
+        listView.setCellFactory(lv -> new ListCell<>() {
+            private final ActivityCard card = new ActivityCard();
+            private final Button removeButton = createSecondaryButton("Remove");
+            private final HBox container = new HBox(12, card, removeButton);
+
+            {
+                container.setAlignment(Pos.CENTER_LEFT);
+                bindDarkModeClass(container);
+                card.bindDarkMode(viewModel.darkModeProperty());
+            }
+
+            @Override
+            protected void updateItem(Event item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    card.setActivity(item);
+                    removeButton.setOnAction(e -> viewModel.getEvents().remove(item));
+                    setGraphic(container);
+                }
+            }
+        });
+        return listView;
+    }
+
+    private void bindDarkModeClass(Node node) {
+        BooleanProperty dark = viewModel.darkModeProperty();
+        if (dark.get() && !node.getStyleClass().contains("dark")) {
+            node.getStyleClass().add("dark");
+        }
+        dark.addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                if (!node.getStyleClass().contains("dark")) {
+                    node.getStyleClass().add("dark");
+                }
+            } else {
+                node.getStyleClass().remove("dark");
+            }
+        });
+    }
+
+    private void styleSurface(Region region) {
+        if (!region.getStyleClass().contains("surface-card")) {
+            region.getStyleClass().add("surface-card");
+        }
+        bindDarkModeClass(region);
+    }
+
+    private void styleHeading(Label label, String cssClass) {
+        if (!label.getStyleClass().contains(cssClass)) {
+            label.getStyleClass().add(cssClass);
+        }
+        bindDarkModeClass(label);
+    }
+
+    private void animateIn(Node node) {
+        node.setOpacity(0);
+        FadeTransition ft = new FadeTransition(Duration.millis(280), node);
+        ft.setToValue(1);
+        ft.play();
     }
 
     public static void main(String[] args) {
