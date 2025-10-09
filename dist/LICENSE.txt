@@ -1,0 +1,11 @@
+iSmart Schedule Custom License
+
+Copyright (c) 2025 joseph babu
+
+This software is provided for personal and evaluation use only. Redistribution, modification, or commercial use is not permitted without explicit written permission from the author.
+
+You may install and use this software on your own computers. You may not sell, rent, or otherwise distribute this software or any derivative works without prior consent.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY.
+
+For licensing inquiries, contact: ligthfall805@gmail.com

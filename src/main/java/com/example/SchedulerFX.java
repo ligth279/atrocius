@@ -9,12 +9,13 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.util.function.BiConsumer;
 
-public class SchedulerFX extends Application {
     
+public class SchedulerFX extends Application {
     // ========== HELPER METHODS FOR DARK MODE & UI COMPONENTS ==========
     
     /**
@@ -156,6 +157,8 @@ public class SchedulerFX extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Smart Weekly Scheduler");
+        // Set window icon
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/icons/calendar-blue.png")));
         root = new BorderPane();
         applyRootBackground();
         showLandingPanel();
