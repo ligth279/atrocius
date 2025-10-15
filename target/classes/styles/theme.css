@@ -12,7 +12,48 @@
 }
 
 .app-root.dark {
-    -fx-background-color: linear-gradient(to bottom right, #0f172a 0%, #1e293b 80%, #06b6d4 100%);
+    -fx-background-color: linear-gradient(to bottom right, #130121 0%, #3f0f67 55%, #ff3cac 100%);
+}
+
+
+.label {
+    -fx-text-fill: #1f2937;
+}
+
+.label.dark {
+    -fx-text-fill: #f6ecff;
+}
+
+.dark .label {
+    -fx-text-fill: #f6ecff;
+}
+
+
+.body-label {
+    -fx-font-size: 15px;
+    -fx-text-fill: #4a4e69;
+}
+
+.body-label.dark {
+    -fx-text-fill: #ffe4ff;
+}
+
+.dark .body-label {
+    -fx-text-fill: #ffe4ff;
+}
+
+.status-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #0f172a;
+}
+
+.status-label.dark {
+    -fx-text-fill: #ffd6f7;
+}
+
+.dark .status-label {
+    -fx-text-fill: #ffd6f7;
 }
 
 
@@ -24,8 +65,8 @@
 }
 
 .surface-card.dark {
-    -fx-background-color: #16213e;
-    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.18), 20, 0.32, 0, 14);
+    -fx-background-color: #24103d;
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.26), 22, 0.34, 0, 16);
 }
 
 .heading-title {
@@ -35,7 +76,7 @@
 }
 
 .heading-title.dark {
-    -fx-text-fill: #06f9fc;
+    -fx-text-fill: #fbe8ff;
 }
 
 .heading-subtitle {
@@ -44,7 +85,7 @@
 }
 
 .heading-subtitle.dark {
-    -fx-text-fill: #67e8f9;
+    -fx-text-fill: #ffb7f5;
 }
 
 
@@ -54,8 +95,8 @@
     -fx-font-size: 16px;
     -fx-font-weight: 600;
     -fx-text-fill: #fff;
-    -fx-background-color: linear-gradient(to right, #f43f5e 0%, #3b82f6 100%);
-    -fx-effect: dropshadow(gaussian, rgba(244, 63, 94, 0.13), 8, 0.18, 0, 2);
+    -fx-background-color: linear-gradient(to right, #8f00ff 0%, #ff3cac 100%);
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.28), 10, 0.24, 0, 4);
 }
 
 .secondary-button {
@@ -71,9 +112,9 @@
 }
 
 .secondary-button.dark {
-    -fx-text-fill: #cbd5f5;
-    -fx-background-color: rgba(99, 102, 241, 0.15);
-    -fx-border-color: rgba(147, 197, 253, 0.4);
+    -fx-text-fill: #f8e9ff;
+    -fx-background-color: rgba(63, 15, 103, 0.45);
+    -fx-border-color: rgba(255, 60, 172, 0.55);
 }
 
 .nav-button {
@@ -86,14 +127,14 @@
 }
 
 .nav-button.dark {
-    -fx-background-color: rgba(148, 163, 184, 0.12);
-    -fx-text-fill: #e2e8f0;
+    -fx-background-color: rgba(63, 15, 103, 0.46);
+    -fx-text-fill: #fcefff;
 }
 
 .nav-button--selected {
-    -fx-background-color: linear-gradient(to right, #818cf8, #a855f7);
+    -fx-background-color: linear-gradient(to right, #8f00ff, #ff3cac);
     -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(129, 140, 248, 0.45), 16, 0.32, 0, 10);
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.45), 18, 0.34, 0, 12);
 }
 
 .chip {
@@ -105,8 +146,72 @@
 }
 
 .chip.dark {
-    -fx-text-fill: #e0e7ff;
-    -fx-background-color: rgba(129, 140, 248, 0.28);
+    -fx-text-fill: #fce8ff;
+    -fx-background-color: rgba(255, 60, 172, 0.4);
+}
+
+
+.check-box.dark,
+.dark .check-box,
+.radio-button.dark,
+.dark .radio-button {
+    -fx-text-fill: #ffeefd;
+}
+
+.radio-button.dark .radio,
+.dark .radio-button .radio,
+.check-box.dark .box,
+.dark .check-box .box {
+    -fx-background-color: rgba(255, 60, 172, 0.25);
+    -fx-border-color: rgba(255, 60, 172, 0.55);
+    -fx-border-radius: 999;
+}
+
+.spinner.dark,
+.dark .spinner,
+.combo-box.dark,
+.dark .combo-box,
+.text-field.dark,
+.dark .text-field {
+    -fx-background-color: #1a0b2f;
+    -fx-text-fill: #fff5ff;
+}
+
+.spinner.dark .text-field,
+.dark .spinner .text-field,
+.combo-box.dark .list-cell,
+.dark .combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #fff5ff;
+}
+
+.spinner.dark .increment-arrow-button,
+.spinner.dark .decrement-arrow-button,
+.dark .spinner .increment-arrow-button,
+.dark .spinner .decrement-arrow-button,
+.combo-box.dark .arrow-button,
+.dark .combo-box .arrow-button {
+    -fx-background-color: rgba(255, 60, 172, 0.28);
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: linear-gradient(to bottom, #1c0d33, #2a134c);
+}
+
+.combo-box-popup .list-cell:filled:selected,
+.combo-box-popup .list-cell:filled:selected:hover {
+    -fx-background-color: rgba(255, 60, 172, 0.35);
+    -fx-text-fill: #fff5ff;
+}
+
+.combo-box-popup .list-cell:filled:hover {
+    -fx-background-color: rgba(143, 0, 255, 0.25);
+    -fx-text-fill: #fff5ff;
+}
+
+.titled-pane.dark .title,
+.dark .titled-pane .title {
+    -fx-text-fill: #ffeefd;
 }
 
 
@@ -123,9 +228,9 @@
 }
 
 .activity-card.dark {
-    -fx-background-color: rgba(30, 32, 48, 0.92);
-    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.35), 16, 0.38, 0, 12);
-    -fx-border-color: rgba(45, 212, 191, 0.36);
+    -fx-background-color: rgba(33, 14, 58, 0.92);
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.28), 18, 0.36, 0, 12);
+    -fx-border-color: rgba(255, 60, 172, 0.38);
 }
 
 
@@ -136,7 +241,7 @@
 }
 
 .activity-card.dark .title {
-    -fx-text-fill: #bfdbfe;
+    -fx-text-fill: #fce8ff;
 }
 
 
@@ -147,7 +252,7 @@
 }
 
 .activity-card.dark .meta {
-    -fx-text-fill: #a5b4fc;
+    -fx-text-fill: #ffbdf4;
 }
 
 .schedule-day {
@@ -159,8 +264,8 @@
 }
 
 .schedule-day.dark {
-    -fx-background-color: rgba(20, 24, 40, 0.9);
-    -fx-effect: dropshadow(gaussian, rgba(30, 41, 59, 0.35), 20, 0.36, 0, 12);
+    -fx-background-color: linear-gradient(to bottom right, #2c0d44 0%, #431a68 100%);
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.32), 24, 0.36, 0, 16);
 }
 
 .schedule-slot {
@@ -172,8 +277,29 @@
 }
 
 .schedule-slot.dark {
-    -fx-background-color: #111827; /* solid dark background for slots */
-    -fx-text-fill: #e0e7ff;
+    -fx-background-color: #2e0f4b; /* richer violet base */
+    -fx-text-fill: #fff4ff;
+}
+
+.dark .schedule-slot {
+    -fx-background-color: #2e0f4b;
+    -fx-text-fill: #fff4ff;
+}
+
+.schedule-slot.dark .title {
+    -fx-text-fill: #ffeeff;
+}
+
+.dark .schedule-slot .title {
+    -fx-text-fill: #ffeeff;
+}
+
+.schedule-slot.dark .meta {
+    -fx-text-fill: #ffbdf4;
+}
+
+.dark .schedule-slot .meta {
+    -fx-text-fill: #ffbdf4;
 }
 
 /* Solid, filled red cylinder for current activity */
@@ -205,8 +331,8 @@
 }
 
 .schedule-slot.dark.schedule-slot--upcoming {
-    background-color: #38bdf8;
-    -fx-background-color: #38bdf8;
+    background-color: linear-gradient(to right, #8f00ff, #ff3cac);
+    -fx-background-color: linear-gradient(to right, #8f00ff, #ff3cac);
 }
 
 .theme-toggle {
@@ -216,7 +342,7 @@
 }
 
 .theme-toggle.dark {
-    -fx-text-fill: #f8fafc;
+    -fx-text-fill: #fcefff;
 }
 
 .frost-scroll {
@@ -244,11 +370,11 @@
 }
 
 .frost-scroll.dark .scroll-bar:vertical .track {
-    -fx-background-color: rgba(15, 23, 42, 0.55);
+    -fx-background-color: rgba(34, 16, 58, 0.55);
 }
 
 .frost-scroll.dark .scroll-bar:vertical .thumb {
-    -fx-background-color: linear-gradient(to bottom, rgba(6, 182, 212, 0.85), rgba(14, 165, 233, 0.9));
+    -fx-background-color: linear-gradient(to bottom, rgba(143, 0, 255, 0.85), rgba(255, 60, 172, 0.9));
 }
 
 .frost-scroll .scroll-bar:vertical .thumb:hover {
@@ -256,7 +382,7 @@
 }
 
 .frost-scroll.dark .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: rgba(6, 182, 212, 1);
+    -fx-background-color: rgba(255, 60, 172, 1);
 }
 
 .timetable-grid {
@@ -272,7 +398,7 @@
 }
 
 .calendar-header.dark {
-    -fx-text-fill: #e2e8f0;
+    -fx-text-fill: #fcefff;
 }
 
 .calendar-cell {
@@ -284,8 +410,8 @@
 }
 
 .calendar-cell.dark {
-    -fx-background-color: rgba(15, 23, 42, 0.82);
-    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.12), 16, 0.24, 0, 8);
+    -fx-background-color: rgba(30, 12, 55, 0.92);
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.22), 18, 0.32, 0, 10);
 }
 
 .calendar-cell--active {
@@ -294,8 +420,8 @@
 }
 
 .calendar-cell--active.dark {
-    -fx-background-color: linear-gradient(to bottom right, rgba(6, 182, 212, 0.75), rgba(14, 165, 233, 0.95));
-    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.4), 20, 0.36, 0, 12);
+    -fx-background-color: linear-gradient(to bottom right, rgba(143, 0, 255, 0.85), rgba(255, 60, 172, 0.95));
+    -fx-effect: dropshadow(gaussian, rgba(255, 60, 172, 0.42), 22, 0.38, 0, 14);
 }
 
 .calendar-cell--idle {
@@ -303,7 +429,7 @@
 }
 
 .calendar-cell--idle.dark {
-    -fx-background-color: rgba(30, 41, 59, 0.6);
+    -fx-background-color: rgba(63, 15, 103, 0.62);
 }
 
 .calendar-cell--outside {
@@ -312,7 +438,7 @@
 }
 
 .calendar-cell--outside.dark {
-    -fx-background-color: rgba(15, 23, 42, 0.45);
+    -fx-background-color: rgba(24, 8, 42, 0.48);
     -fx-opacity: 0.4;
 }
 
@@ -321,7 +447,7 @@
 }
 
 .calendar-cell__content.dark {
-    -fx-text-fill: #e2e8f0;
+    -fx-text-fill: #fcefff;
 }
 
 .calendar-day-month {
@@ -332,7 +458,7 @@
 }
 
 .calendar-day-month.dark {
-    -fx-text-fill: #67e8f9;
+    -fx-text-fill: #ffb7f5;
 }
 
 .calendar-day-num {
@@ -342,7 +468,7 @@
 }
 
 .calendar-day-num.dark {
-    -fx-text-fill: #f8fafc;
+    -fx-text-fill: #fef2ff;
 }
 
 .calendar-day-hint {
@@ -351,5 +477,5 @@
 }
 
 .calendar-day-hint.dark {
-    -fx-text-fill: #cbd5f5;
+    -fx-text-fill: #f5ccff;
 }

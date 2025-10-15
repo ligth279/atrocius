@@ -30,6 +30,7 @@ import java.time.LocalTime;
  */
 public class TimetableDayView extends VBox {
     private final ObservableList<ActivityRepository.TimetableEntry> entries;
+    private boolean darkMode;
 
     public TimetableDayView(ObservableList<ActivityRepository.TimetableEntry> entries) {
         this.entries = entries;
@@ -42,7 +43,14 @@ public class TimetableDayView extends VBox {
     }
 
     public void bindDarkMode(BooleanProperty darkProperty) {
-        darkProperty.addListener((obs, oldVal, newVal) -> rebuild());
+        darkMode = darkProperty.get();
+        applyDarkModeClass();
+        rebuild();
+        darkProperty.addListener((obs, oldVal, newVal) -> {
+            darkMode = newVal;
+            applyDarkModeClass();
+            rebuild();
+        });
     }
 
     private void rebuild() {
@@ -50,6 +58,9 @@ public class TimetableDayView extends VBox {
         if (entries.isEmpty()) {
             Label empty = new Label("No entries for this date yet. Generate a schedule first!");
             empty.getStyleClass().add("meta");
+            if (darkMode && !empty.getStyleClass().contains("dark")) {
+                empty.getStyleClass().add("dark");
+            }
             getChildren().add(empty);
             return;
         }
@@ -73,7 +84,7 @@ public class TimetableDayView extends VBox {
 
             VBox slot = new VBox(4);
             slot.getStyleClass().add("schedule-slot");
-            if (darkPropertyAvailable()) {
+            if (darkMode && !slot.getStyleClass().contains("dark")) {
                 slot.getStyleClass().add("dark");
             }
 
@@ -92,6 +103,14 @@ public class TimetableDayView extends VBox {
             time.getStyleClass().add("title");
             Label activity = new Label(activityName);
             activity.getStyleClass().add("meta");
+            if (darkMode) {
+                if (!time.getStyleClass().contains("dark")) {
+                    time.getStyleClass().add("dark");
+                }
+                if (!activity.getStyleClass().contains("dark")) {
+                    activity.getStyleClass().add("dark");
+                }
+            }
             slot.getChildren().addAll(time, activity);
             getChildren().add(slot);
 
@@ -110,8 +129,8 @@ public class TimetableDayView extends VBox {
     private void applyPulseAnimation(VBox slot) {
         // Subtle glassy sweep with red border for current activity
         Object existing = slot.getProperties().get("gradientTimeline");
-        if (existing instanceof Timeline) {
-            ((Timeline) existing).stop();
+        if (existing instanceof Timeline timeline) {
+            timeline.stop();
         }
 
         // Subtle cyan glow effect
@@ -157,7 +176,13 @@ public class TimetableDayView extends VBox {
         tl.play();
     }
 
-    private boolean darkPropertyAvailable() {
-        return getScene() != null && getScene().getStylesheets().stream().anyMatch(s -> s.contains("dark"));
+    private void applyDarkModeClass() {
+        if (darkMode) {
+            if (!getStyleClass().contains("dark")) {
+                getStyleClass().add("dark");
+            }
+        } else {
+            getStyleClass().remove("dark");
+        }
     }
 }
