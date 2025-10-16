@@ -2,7 +2,7 @@ package com.example;
 
 public class Timetable {
     private final int days;
-    private static final int SLOTS_PER_DAY = 48; // 24 hours * 2
+    private static final int SLOTS_PER_DAY = 96; // 24 hours * 4 (15-minute slots)
     private Activity[][] slots;
 
     public Timetable(int days) {

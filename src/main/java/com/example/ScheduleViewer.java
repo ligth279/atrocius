@@ -139,8 +139,8 @@ public class ScheduleViewer {
     }
 
     private String slotToTime(int slot) {
-        int hour = (slot / 2) % 24;
-        int minute = (slot % 2) * 30;
+        int hour = (slot / 4) % 24;
+        int minute = (slot % 4) * 15;
         return String.format("%02d:%02d", hour, minute);
     }
 

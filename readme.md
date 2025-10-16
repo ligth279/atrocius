@@ -14,9 +14,18 @@ iSmart Schedule is a smart weekly scheduler for Windows, featuring timeline visu
 ## How to Install
 
 1. Download the latest installer from the [Releases](https://github.com/YourUsername/YourRepo/releases) page or from your distribution link.
-2. Double-click the `iSmart-Schedule-Setup-1.0.0.exe` file.
+2. Double-click the `iSmart-Schedule-Setup-2.0.0.exe` file.
 3. Follow the on-screen instructions to complete the installation.
 4. Launch iSmart Schedule from the Start Menu or Desktop shortcut.
+## VERSION
+  ** 1.5.0 **
+     - imporved dark mode!
+     - improved slot system for more flexiblity
+  ** 2.0.0 **
+     - improved ui/ux with more color coding and better design
+     - improved timetable generator logic
+     - notifcation!
+
 
 ## How to Build (for developers)
 

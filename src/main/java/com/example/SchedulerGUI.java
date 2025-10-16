@@ -217,10 +217,10 @@ public class SchedulerGUI extends JFrame {
                 j++;
             }
             int endSlot = entries.get(j-1).slot;
-            int startHour = startSlot / 2;
-            int startMin = (startSlot % 2) * 30;
-            int endHour = (endSlot + 1) / 2;
-            int endMin = ((endSlot + 1) % 2) * 30;
+            int startHour = startSlot / 4;
+            int startMin = (startSlot % 4) * 15;
+            int endHour = (endSlot + 1) / 4;
+            int endMin = ((endSlot + 1) % 4) * 15;
             sb.append(String.format("%02d:%02d-%02d:%02d %s\n", startHour, startMin, endHour, endMin, activity));
             i = j;
         }
@@ -255,9 +255,9 @@ public class SchedulerGUI extends JFrame {
             }
             int workHour = (Integer) workHourSpinner.getValue();
             int workMinute = Integer.parseInt((String) workMinuteBox.getSelectedItem());
-            int workStartSlot = workHour * 2 + (workMinute == 30 ? 1 : 0);
-            int workDurationSlots = ((Integer) workDurationSpinner.getValue()) * 2;
-            int sleepDurationSlots = ((Integer) sleepDurationSpinner.getValue()) * 2;
+            int workStartSlot = workHour * 4 + workMinute / 15;
+            int workDurationSlots = ((Integer) workDurationSpinner.getValue()) * 4;
+            int sleepDurationSlots = ((Integer) sleepDurationSpinner.getValue()) * 4;
 
             // Parse tasks (support recurring on multiple days)
             java.util.List<Task> tasks = new java.util.ArrayList<>();
@@ -292,9 +292,9 @@ public class SchedulerGUI extends JFrame {
                     java.time.LocalDate eventDate = java.time.LocalDate.parse(parts[1].trim()); // yyyy-MM-dd
                     int hour = Integer.parseInt(parts[2].trim());
                     int minute = Integer.parseInt(parts[3].trim());
-                    int startSlot = hour * 2 + (minute == 30 ? 1 : 0);
+                    int startSlot = hour * 4 + minute / 15;
                     double dur = Double.parseDouble(parts[4].trim());
-                    int slots = (int) Math.round(dur * 2);
+                    int slots = (int) Math.round(dur * 4);
                     events.add(new Event(name, slots, eventDate, startSlot));
                 }
             }

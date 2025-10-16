@@ -1,7 +1,6 @@
 package com.example.ui;
 
 import com.example.ActivityRepository;
-import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -14,13 +13,12 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.scene.paint.Color;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Blend;
-import javafx.scene.effect.BlendMode;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -66,7 +64,7 @@ public class TimetableDayView extends VBox {
         }
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
-        int currentSlot = now.getHour() * 2 + (now.getMinute() >= 30 ? 1 : 0);
+        int currentSlot = now.getHour() * 4 + now.getMinute() / 15;
 
         // Merge consecutive slots with the same activity
         int n = entries.size();
@@ -75,6 +73,8 @@ public class TimetableDayView extends VBox {
             ActivityRepository.TimetableEntry startEntry = entries.get(i);
             int startSlot = startEntry.slot;
             String activityName = startEntry.activityName;
+            String activityType = startEntry.activityType;
+            SlotCategory category = classifySlot(activityName, activityType);
             int j = i + 1;
             while (j < n && entries.get(j).activityName.equals(activityName) && entries.get(j).slot == entries.get(j - 1).slot + 1) {
                 j++;
@@ -82,8 +82,9 @@ public class TimetableDayView extends VBox {
             int endSlotInclusive = entries.get(j - 1).slot;
             int endSlotExclusive = endSlotInclusive + 1;
 
-            VBox slot = new VBox(4);
+            VBox slot = new VBox(6);
             slot.getStyleClass().add("schedule-slot");
+            applyCategoryStyles(slot, category, activityName);
             if (darkMode && !slot.getStyleClass().contains("dark")) {
                 slot.getStyleClass().add("dark");
             }
@@ -99,31 +100,92 @@ public class TimetableDayView extends VBox {
                 }
             }
 
-            Label time = new Label(formatTimeRange(startSlot, endSlotExclusive));
-            time.getStyleClass().add("title");
+            Label startTime = new Label(formatSlot(startSlot));
+            startTime.getStyleClass().add("title");
+            Label iconLabel = new Label(getIconFor(category, activityName));
+            iconLabel.getStyleClass().add("slot-icon");
             Label activity = new Label(activityName);
             activity.getStyleClass().add("meta");
+            Label endTime = new Label(formatSlot(endSlotExclusive));
+            endTime.getStyleClass().add("title");
             if (darkMode) {
-                if (!time.getStyleClass().contains("dark")) {
-                    time.getStyleClass().add("dark");
-                }
-                if (!activity.getStyleClass().contains("dark")) {
-                    activity.getStyleClass().add("dark");
+                for (Label lbl : new Label[]{startTime, activity, iconLabel, endTime}) {
+                    if (!lbl.getStyleClass().contains("dark")) {
+                        lbl.getStyleClass().add("dark");
+                    }
                 }
             }
-            slot.getChildren().addAll(time, activity);
+            // Use spacers to spread out content
+            javafx.scene.layout.Region leftSpacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.Region rightSpacer = new javafx.scene.layout.Region();
+            HBox.setHgrow(leftSpacer, javafx.scene.layout.Priority.ALWAYS);
+            HBox.setHgrow(rightSpacer, javafx.scene.layout.Priority.ALWAYS);
+            HBox row = new HBox(18, startTime, leftSpacer, iconLabel, activity, rightSpacer, endTime);
+            row.setAlignment(Pos.CENTER);
+            slot.getChildren().add(row);
             getChildren().add(slot);
 
             i = j;
         }
     }
 
-    private static String formatTimeRange(int startSlot, int endSlot) {
-        int startHour = startSlot / 2;
-        int startMinute = (startSlot % 2) * 30;
-        int endHour = endSlot / 2;
-        int endMinute = (endSlot % 2) * 30;
-        return String.format("%02d:%02d - %02d:%02d", startHour, startMinute, endHour, endMinute);
+    private void applyCategoryStyles(VBox slot, SlotCategory category, String activityName) {
+        if (category == SlotCategory.WORK && activityName != null && !activityName.equalsIgnoreCase("Work")) {
+            // Respect custom name while keeping work palette
+            slot.getStyleClass().add("slot-work");
+            return;
+        }
+
+        switch (category) {
+            case EVENT -> slot.getStyleClass().add("slot-event");
+            case TASK -> slot.getStyleClass().add("slot-task");
+            case WORK -> slot.getStyleClass().add("slot-work");
+            case SLEEP -> slot.getStyleClass().add("slot-sleep");
+            case FIXED -> slot.getStyleClass().add("slot-fixed");
+            default -> {
+                // Leave default styling for uncategorised entries
+            }
+        }
+    }
+
+    private SlotCategory classifySlot(String activityName, String activityType) {
+        if (activityType == null) {
+            return SlotCategory.GENERIC;
+        }
+
+        String normalized = activityType.trim().toLowerCase();
+        String lowerName = activityName == null ? "" : activityName.toLowerCase();
+        return switch (normalized) {
+            case "event" -> SlotCategory.EVENT;
+            case "task" -> SlotCategory.TASK;
+            case "fixedactivity" -> {
+                if (lowerName.contains("sleep")) {
+                    yield SlotCategory.SLEEP;
+                }
+                if (lowerName.contains("work") || lowerName.contains("school")) {
+                    yield SlotCategory.WORK;
+                }
+                yield SlotCategory.FIXED;
+            }
+            default -> SlotCategory.GENERIC;
+        };
+    }
+
+    private String getIconFor(SlotCategory category, String activityName) {
+        return switch (category) {
+            case EVENT -> "🎉";
+            case TASK -> "📝";
+            case WORK -> "💼";
+            case SLEEP -> "😴";
+            case FIXED -> "📌";
+            default -> activityName != null && !activityName.isBlank() ? "📋" : "⬜";
+        };
+    }
+
+    private static String formatSlot(int slot) {
+        int hour = slot / 4;
+        int minute = (slot % 4) * 15;
+        return String.format("%02d:%02d", hour, minute);
     }
 
     private void applyPulseAnimation(VBox slot) {
@@ -184,5 +246,14 @@ public class TimetableDayView extends VBox {
         } else {
             getStyleClass().remove("dark");
         }
+    }
+
+    private enum SlotCategory {
+        EVENT,
+        TASK,
+        WORK,
+        SLEEP,
+        FIXED,
+        GENERIC
     }
 }

@@ -388,7 +388,7 @@ public class SchedulerFX extends Application {
         bindDarkModeClass(workHourSpinner);
 
         workMinuteBox = new ComboBox<>();
-        workMinuteBox.getItems().addAll("00", "30");
+        workMinuteBox.getItems().addAll("00", "15", "30", "45");
         workMinuteBox.setValue("00");
         bindDarkModeClass(workMinuteBox);
 
@@ -432,8 +432,8 @@ public class SchedulerFX extends Application {
         bindDarkModeClass(taskHourSpinner);
 
         taskMinuteBox = new ComboBox<>();
-        taskMinuteBox.getItems().addAll("00", "30");
-        taskMinuteBox.setValue("30");
+        taskMinuteBox.getItems().addAll("00", "15", "30", "45");
+        taskMinuteBox.setValue("00");
         bindDarkModeClass(taskMinuteBox);
 
         HBox durationBox = new HBox(8,
@@ -511,7 +511,7 @@ public class SchedulerFX extends Application {
         bindDarkModeClass(eventHourSpinner);
 
         eventMinuteBox = new ComboBox<>();
-        eventMinuteBox.getItems().addAll("00", "30");
+        eventMinuteBox.getItems().addAll("00", "15", "30", "45");
         eventMinuteBox.setValue("00");
         bindDarkModeClass(eventMinuteBox);
 
@@ -519,7 +519,7 @@ public class SchedulerFX extends Application {
         startTimeBox.setAlignment(Pos.CENTER_LEFT);
         bindDarkModeClass(startTimeBox);
 
-        eventDurationSpinner = new Spinner<>(1, 12, 1);
+        eventDurationSpinner = new Spinner<>(1, 120, 1);  // Max 120 hours (5 days)
         eventDurationSpinner.setEditable(true);
         bindDarkModeClass(eventDurationSpinner);
 
@@ -567,9 +567,9 @@ public class SchedulerFX extends Application {
 
         int durationHours = taskHourSpinner.getValue();
         int durationMinutes = Integer.parseInt(taskMinuteBox.getValue());
-        int durationSlots = durationHours * 2 + (durationMinutes == 30 ? 1 : 0);
+        int durationSlots = durationHours * 4 + durationMinutes / 15;
         if (durationSlots == 0) {
-            durationSlots = 1; // enforce minimum 30 minutes
+            durationSlots = 1; // enforce minimum 15 minutes
         }
 
         List<Integer> selectedDays = new ArrayList<>();
@@ -616,8 +616,16 @@ public class SchedulerFX extends Application {
 
         int hour = eventHourSpinner.getValue();
         String minute = eventMinuteBox.getValue();
-        int slot = hour * 2 + ("30".equals(minute) ? 1 : 0);
-        int durationSlots = eventDurationSpinner.getValue() * 2;
+        int slot = hour * 4 + Integer.parseInt(minute) / 15;
+        int durationHours = eventDurationSpinner.getValue();
+        
+        // Validate max 5 days (120 hours)
+        if (durationHours > 120) {
+            eventStatusLabel.setText("⚠️ Event duration cannot exceed 5 days (120 hours).");
+            return;
+        }
+        
+        int durationSlots = durationHours * 4;
 
         viewModel.getEvents().add(new Event(name, durationSlots, date, slot));
         eventStatusLabel.setText("🎉 Event added");
@@ -646,10 +654,10 @@ public class SchedulerFX extends Application {
             }
         }
 
-        int workStartSlot = workHourSpinner.getValue() * 2
-                + ("30".equals(workMinuteBox.getValue()) ? 1 : 0);
-        int workDurationSlots = workDurationSpinner.getValue() * 2;
-        int sleepDurationSlots = sleepDurationSpinner.getValue() * 2;
+        int workStartSlot = workHourSpinner.getValue() * 4
+                + Integer.parseInt(workMinuteBox.getValue()) / 15;
+        int workDurationSlots = workDurationSpinner.getValue() * 4;
+        int sleepDurationSlots = sleepDurationSpinner.getValue() * 4;
 
         new Thread(() -> {
             boolean success = viewModel.generateAndPersistSchedule(

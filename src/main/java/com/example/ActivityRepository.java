@@ -227,7 +227,8 @@ public class ActivityRepository {
                 while (rs.next()) {
                     int slot = rs.getInt("slot");
                     String name = rs.getString("name");
-                    entries.add(new TimetableEntry(date, slot, name));
+                    String type = rs.getString("type");
+                    entries.add(new TimetableEntry(date, slot, name, type));
                 }
             }
         } catch (SQLException e) {
@@ -252,11 +253,13 @@ public class ActivityRepository {
         public final String date;
         public final int slot;
         public final String activityName;
+        public final String activityType;
 
-        public TimetableEntry(String date, int slot, String activityName) {
+        public TimetableEntry(String date, int slot, String activityName, String activityType) {
             this.date = date;
             this.slot = slot;
             this.activityName = activityName;
+            this.activityType = activityType;
         }
     }
 }

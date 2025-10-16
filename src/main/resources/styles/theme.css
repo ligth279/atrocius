@@ -286,6 +286,67 @@
     -fx-text-fill: #fff4ff;
 }
 
+/* Category colour coding ---------------------------------------------------- */
+.schedule-slot.slot-event {
+    background-color: #d8b4fe;
+    -fx-background-color: linear-gradient(to right, #d8b4fe, #c084fc);
+    -fx-text-fill: #312e81;
+}
+
+.schedule-slot.slot-task {
+    background-color: #6ee7b7;
+    -fx-background-color: linear-gradient(to right, #a7f3d0, #6ee7b7);
+    -fx-text-fill: #065f46;
+}
+
+.schedule-slot.slot-work {
+    background-color: #7dd3fc;
+    -fx-background-color: linear-gradient(to right, #bae6fd, #7dd3fc);
+    -fx-text-fill: #1e3a8a;
+}
+
+.schedule-slot.slot-sleep {
+    background-color: #4b5563;
+    -fx-background-color: linear-gradient(to right, #6b7280, #4b5563);
+    -fx-text-fill: #f3f4f6;
+}
+
+.schedule-slot.slot-fixed {
+    background-color: #d1d5db;
+    -fx-background-color: linear-gradient(to right, #e5e7eb, #d1d5db);
+    -fx-text-fill: #374151;
+}
+
+.dark .schedule-slot.slot-event {
+    background-color: #f43f5e;
+    -fx-background-color: linear-gradient(to right, #fb7185, #f43f5e);
+    -fx-text-fill: white;
+}
+
+.dark .schedule-slot.slot-task {
+    background-color: #22d3ee;
+    -fx-background-color: linear-gradient(to right, #67e8f9, #22d3ee);
+    -fx-text-fill: #0e7490;
+}
+
+.dark .schedule-slot.slot-work {
+    background-color: #6366f1;
+    -fx-background-color: linear-gradient(to right, #818cf8, #6366f1);
+    -fx-text-fill: white;
+}
+
+.dark .schedule-slot.slot-sleep {
+    background-color: #2e104b;
+    -fx-background-color: linear-gradient(to right, #3b0764, #2e104b);
+    -fx-text-fill: #f3e8ff;
+}
+
+.dark .schedule-slot.slot-fixed {
+    background-color: #374151;
+    -fx-background-color: linear-gradient(to right, #4b5563, #374151);
+    -fx-text-fill: #f9fafb;
+}
+
 .schedule-slot.dark .title {
     -fx-text-fill: #ffeeff;
 }
@@ -300,6 +361,18 @@
 
 .dark .schedule-slot .meta {
     -fx-text-fill: #ffbdf4;
+}
+
+.slot-icon {
+    font-size: 18px;
+    -fx-font-size: 18px;
+    opacity: 0.88;
+    -fx-opacity: 0.88;
+}
+
+.slot-icon.dark {
+    opacity: 0.96;
+    -fx-opacity: 0.96;
 }
 
 /* Solid, filled red cylinder for current activity */

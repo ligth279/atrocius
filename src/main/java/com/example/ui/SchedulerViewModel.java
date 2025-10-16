@@ -95,11 +95,11 @@ public class SchedulerViewModel {
      * the calendar view picks up new entries automatically.
      */
     public boolean generateAndPersistSchedule(List<Integer> workdays,
-                                              int workStartSlot,
-                                              int workDurationSlots,
-                                              int sleepDurationSlots,
-                                              LocalDate startDate,
-                                              LocalDate endDate) {
+                                            int workStartSlot,
+                                            int workDurationSlots,
+                                            int sleepDurationSlots,
+                                            LocalDate startDate,
+                                            LocalDate endDate) {
         if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
             return false;
         }

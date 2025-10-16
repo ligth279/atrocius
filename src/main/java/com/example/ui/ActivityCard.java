@@ -100,7 +100,7 @@ public class ActivityCard extends VBox {
     }
 
     private static String formatDuration(int slots) {
-        int minutes = slots * 30;
+        int minutes = slots * 15;
         int hours = minutes / 60;
         int mins = minutes % 60;
         if (hours > 0 && mins > 0) {
@@ -112,9 +112,9 @@ public class ActivityCard extends VBox {
     }
 
     private static String formatSlot(int slot) {
-        int hour = slot / 2;
-        boolean half = slot % 2 == 1;
-        return String.format("%02d:%02d", hour, half ? 30 : 0);
+        int hour = slot / 4;
+        int minute = (slot % 4) * 15;
+        return String.format("%02d:%02d", hour, minute);
     }
 
     private static String prettyTime(String preferredTime) {
